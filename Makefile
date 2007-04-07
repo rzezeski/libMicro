@@ -68,6 +68,8 @@ TARBALL_CONTENTS = 	\
 	README
 
 default $(ALL) run cstyle lint tattle: $(BINS)
+	@cp bench.sh bench
+	@cp multiview.sh multiview
 	@chmod +x bench multiview
 	@mkdir -p bin-`uname -m`; cd bin-`uname -m`; MACH=`uname -m` $(MAKE) -f ../Makefile.`uname -s` $@
 
