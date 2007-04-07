@@ -70,18 +70,20 @@ TARBALL_CONTENTS = 	\
 default $(ALL) run cstyle lint tattle: $(BINS)
 	@cp bench.sh bench
 	@cp multiview.sh multiview
-	@chmod +x bench multiview
+	@cp wrapper.sh wrapper
+	@chmod +x bench multiview wrapper
 	@mkdir -p bin-`uname -m`; cd bin-`uname -m`; MACH=`uname -m` $(MAKE) -f ../Makefile.`uname -s` $@
 
 clean:
-	@rm -rf bin bin-* 
+	rm -rf bin bin-* wrapper multiview bench
 
 bin:	
 	@mkdir -p bin
 
 $(BINS): bin
+	@cp wrapper.sh wrapper
+	@chmod +x wrapper
 	@ln -sf ../wrapper $@
-	@chmod +x bench wrapper
 
 
 libMicro.tar:	FORCE
