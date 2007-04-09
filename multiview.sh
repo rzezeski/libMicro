@@ -76,31 +76,40 @@
 }	    
 
 END { 
-	
-	printf("<html>\n");
+	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n");
+	printf("\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
+	printf("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
 	printf("<head>\n");
-	printf("<meta http-equiv=\"content-type\" content=\"text/html; charset=ISO-8859-1\">\n");
-	printf("<meta name=\"author\" content=\"autogen\">\n");
+	printf("<meta http-equiv=\"content-type\" content=\"text/html; charset=ISO-8859-1\" />\n");
+	printf("<meta name=\"author\" content=\"autogen\" />\n");
 	printf("<title>multiview comparison</title>\n")
+	printf("<style type=\"text/css\">\n");
+	printf("body { font-family: sans-serif; }\n");
+	printf("table { border-collapse: collapse; }\n");
+	printf("td { padding: 0.1em; border: 1px solid #ccc; text-align: right; }\n");
+	printf("td.header { text-align: left; }\n");
+	printf("pre { margin-top: 0em; margin-bottom: 0em; }\n");
+	printf("</style>\n");
 	printf("</head>\n");
 	printf("<body bgcolor=\"#ffffff\" link=\"#0000ee\" vlink=\"#cc0000\" alink=\"#0000ee\">\n");
 	printf("<table border=\"1\" cellspacing=\"1\">\n");
 	printf("<tbody>\n");
 	for(i = 1; i <= header_count; i++) {
 		hname = headers[i];
-		printf("<tr><td>%s</td>\n", hname);
+		printf("<tr><td class=\"header\">%s</td>\n", hname);
 		
-		for (j = 1; j <= ARGC; j++) {
-			printf("<td>%s</td>\n", header_data[hname, ARGV[j]]);
+		for (j = 1; j < ARGC; j++) {
+			sub("^[\t ]+", "", header_data[hname, ARGV[j]]);
+			printf("<td class=\"header\">%s</td>\n", header_data[hname, ARGV[j]]);
 		}
+		printf("</tr>\n");
 	}
-	printf("</tr>\n");
 	printf("<tr>\n");
-	printf("<td><b>BENCHMARK</b><br></td>\n");
-	printf("<td align=\"right\"><b>USECS</b><br></td>\n");
+	printf("<th>BENCHMARK</th>\n");
+	printf("<th align=\"right\">USECS</th>\n");
 
 	for (i = 2; i < ARGC; i++) 
-		printf("<td align=\"right\"><b>USECS [percentage]</b><br></td>\n");
+		printf("<th align=\"right\">USECS [percentage]</th></tr>\n");
 
 	for(i = 1; i < benchmark_count; i++) {
 	  for(j = 1; j < benchmark_count; j++) {
@@ -117,17 +126,17 @@ END {
 		a = benchmark_data[name, ARGV[1]];
 
 		printf("<tr>\n");
-		printf("<td align=\"right\">%25s</td>\n", name);
+		printf("<td>%s</td>\n", name);
 		if (a > 0)
-			printf("<td align=\"right\">%25.5f</td>\n", a);
+			printf("<td><pre>%f</pre></td>\n", a);
 		else {
 			if (a < 0)
-				printf("<td align=\"right\" bgcolor=\"#ff0000\">%25s</td>\n", "ERRORS");
+				printf("<td bgcolor=\"#ff0000\">%s</td>\n", "ERRORS");
 			else 
-				printf("<td align=\"right\">%25s</td>\n", "missing");
+				printf("<td>%s</td>\n", "missing");
 				
 			for (j = 2; j < ARGC; j++) 
-				printf("<td align=\"right\">%25s</td>\n", "not computed");
+				printf("<td>%s</td>\n", "not computed");
 			continue;
 		}
 
@@ -141,20 +150,20 @@ END {
 				if (factor <= 1)
 				  percentage = 100/factor - 100;
 				
-				printf("<td align=\"right\" bgcolor=\"%s\"><pre>%11.5f[%#+7.1f%%]</td>\n", 
+				printf("<td bgcolor=\"%s\"><pre>%11.5f[%#+7.1f%%]</pre></td>\n", 
 					bgcolor, b, percentage);
 			}
 			
 			else if (b < 0) 
-				printf("<td align=\"right\" bgcolor=\"#ff0000\">%25s</td>\n", "ERRORS");
+				printf("<td bgcolor=\"#ff0000\">%s</td>\n", "ERRORS");
 			else
-				printf("<td align=\"right\">%25s</td>\n", "missing");
+				printf("<td>%25s</td>\n", "missing");
 			
 		}
 		printf("</tr>\n");
 
 	}
-	printf("</tbody></table><br></body></html>\n");
+	printf("</tbody></table></body></html>\n");
 
 } 
 
@@ -169,7 +178,7 @@ function colormap(value, bgcolor, r, g, b)
 		r = colorcalc(.2, value, .9, 0, 255);
 		g = colorcalc(.2, value, .9, 153, 255);
 		b = colorcalc(.2, value, .9, 0, 255);
-		bgcolor=sprintf("#%2x%2x%2x",  r, g, b);
+		bgcolor=sprintf("#%2.2x%2.2x%2.2x",  r, g, b);
 	}
 	else if (value < 1.1)
 		bgcolor="#ffffff";
@@ -177,8 +186,9 @@ function colormap(value, bgcolor, r, g, b)
 		r = 255;
 		g = colorcalc(1.1, value, 5, 255, 0);
 		b = colorcalc(1.1, value, 5, 255, 0);
-		bgcolor=sprintf("#%2x%2x%2x",  r, g, b);
+		bgcolor=sprintf("#%2.2x%2.2x%2.2x",  r, g, b);
 	}
+
 	return (bgcolor);
 }
 
