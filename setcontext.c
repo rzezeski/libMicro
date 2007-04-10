@@ -28,11 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)setcontext.c	1.4	05/08/04 SMI"
-#endif
-
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>

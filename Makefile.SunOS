@@ -27,8 +27,6 @@
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-# ident	"@(#)Makefile.SunOS	1.7	05/08/04 SMI"
-#
 
 
 CPPFLAGS=		-DUSE_GETHRTIME -D_REENTRANT

@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)select.c	1.8	05/08/04 SMI"
-#endif
-
 #define	MAX(x, y)		((x) > (y) ? (x) : (y))
 #define	MIN(x, y)		((x) > (y) ? (y) : (x))
 

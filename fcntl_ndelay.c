@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)fcntl_ndelay.c	1.5	05/08/04 SMI"
-#endif
-
 /*
  * measures  O_NDELAY on socket
  */

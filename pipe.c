@@ -28,11 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)pipe.c	1.4	05/08/04 SMI"
-#endif
-
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/wait.h>

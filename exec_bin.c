@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)exec_bin.c	1.3	05/08/04 SMI"
-#endif
-
 /*
  * time program to recursively test exec time
  */

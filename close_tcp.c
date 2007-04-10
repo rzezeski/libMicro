@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)close_tcp.c	1.5	05/08/04 SMI"
-#endif
-
 /*
  * benchmark to measure time to close a local tcp connection
  */

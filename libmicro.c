@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)libmicro.c	1.20	05/08/04 SMI"
-#endif
-
 /*
  * benchmarking routines
  */

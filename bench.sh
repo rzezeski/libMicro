@@ -29,8 +29,6 @@
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-# ident	"@(#)bench	1.25	05/08/04 SMI"
-#
 
 bench_version=0.3.0
 libmicro_version=`bin/tattle -V`

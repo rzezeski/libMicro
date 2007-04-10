@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)localtime_r.c	1.4	05/08/04 SMI"
-#endif
-
 /*
  * localtime benchmark
  */

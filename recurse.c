@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)recurse.c	1.4	05/08/04 SMI"
-#endif
-
 
 #include <unistd.h>
 #include <stdio.h>

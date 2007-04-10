@@ -27,9 +27,6 @@
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
-#ifdef	__sun
-#pragma ident	"@(#)strtol.c	1.1	05/08/04 SMI"
-#endif
 
 #include <unistd.h>
 #include <stdio.h>

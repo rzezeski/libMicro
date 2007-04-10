@@ -28,11 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)sigprocmask.c	1.4	05/08/04 SMI"
-#endif
-
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

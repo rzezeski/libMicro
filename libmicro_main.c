@@ -28,11 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)libmicro_main.c	1.1	05/08/04 SMI"
-#endif
-
-
 /*
  * Separate file for main so we can link other programs
  * with libmicro

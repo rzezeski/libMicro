@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)memset.c	1.6	05/08/04 SMI"
-#endif
-
 /*
  * memset
  */

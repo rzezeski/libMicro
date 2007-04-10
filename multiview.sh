@@ -28,8 +28,6 @@
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-# ident	"@(#)multiview	1.6	05/08/04 SMI"
-#
 
 #
 # output html comparison of several libmicro output data files

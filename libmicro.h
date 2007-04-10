@@ -28,8 +28,6 @@
 #ifndef LIBMICRO_H
 #define	LIBMICRO_H
 
-#pragma ident	"@(#)libmicro.h	1.19	05/08/04 SMI"
-
 #include <pthread.h>
 
 #define	LIBMICRO_VERSION	"0.3.0"

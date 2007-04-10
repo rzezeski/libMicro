@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)mutex.c	1.7	05/08/04 SMI"
-#endif
-
 /*
  * mutex
  */

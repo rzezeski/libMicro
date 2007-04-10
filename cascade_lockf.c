@@ -28,11 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)cascade_lockf.c	1.4	05/08/04 SMI"
-#endif
-
-
 /*
  * The "cascade" test case is a multiprocess/multithread batten-passing model
  * using lock primitives alone for synchronisation. Threads are arranged in a

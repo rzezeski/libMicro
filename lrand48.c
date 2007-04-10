@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)lrand48.c	1.4	05/08/04 SMI"
-#endif
-
 /*
  * lrand48
  */

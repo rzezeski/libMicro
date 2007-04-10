@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)strcpy.c	1.3	05/08/04 SMI"
-#endif
-
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>

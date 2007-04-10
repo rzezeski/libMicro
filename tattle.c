@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef  __sun
-#pragma ident	"@(#)tattle.c	1.1	05/08/04 SMI"
-#endif
-
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>

@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)writev.c	1.7	05/08/04 SMI"
-#endif
-
 #include <sys/uio.h>
 #include <limits.h>
 #include <unistd.h>

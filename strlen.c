@@ -27,10 +27,6 @@
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
-#ifdef	__sun
-#pragma ident	"@(#)strlen.c	1.4	05/08/04 SMI"
-#endif
-
 
 #include <unistd.h>
 #include <stdlib.h>

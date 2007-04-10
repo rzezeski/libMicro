@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)recurse2.c	1.3	05/08/04 SMI"
-#endif
-
 #include <string.h>
 
 int recurse1(int x, int y, char *s);

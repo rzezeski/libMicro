@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)pwrite.c	1.3	05/08/04 SMI"
-#endif
-
 #ifdef linux
 #define	_XOPEN_SOURCE 500
 #endif

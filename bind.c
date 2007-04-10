@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)bind.c	1.4	05/08/04 SMI"
-#endif
-
 /*
  * benchmark for bind... keep in mind tcp hash chain effects
  */

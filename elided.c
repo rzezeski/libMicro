@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)elided.c	1.3	05/08/04 SMI"
-#endif
-
 /*
  * empty benchmark program to substitute for  benchmarks
  * that don't work/exist on some platforms

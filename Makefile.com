@@ -27,8 +27,6 @@
 # Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
-# ident	"@(#)Makefile.com	1.10	05/08/04 SMI"
-#
 
 include ../Makefile.benchmarks
 

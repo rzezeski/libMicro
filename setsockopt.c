@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)setsockopt.c	1.3	05/08/04 SMI"
-#endif
-
 
 #include <sys/types.h>
 #include <sys/socket.h>

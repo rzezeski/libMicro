@@ -28,10 +28,6 @@
  * Use is subject to license terms.
  */
 
-#ifdef	__sun
-#pragma ident	"@(#)benchmark_optswitch.c	1.3	05/08/04 SMI"
-#endif
-
 /*
  * default implementation (nop) of benchmark_optswitch
  */
