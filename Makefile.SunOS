@@ -35,7 +35,23 @@ CPPFLAGS=		-DUSE_GETHRTIME -D_REENTRANT
 
 CFLAGS = -O $(extra_CFLAGS)
 
-ELIDED_BENCHMARKS=cascade_flock
+#
+# These defines allow libmicro to be compiled against older Solaris
+# releases by turning off the tests which don't work there.
+#
+# This is a little contorted-- UNAME_RELEASE is set as an environment
+# variable for us by the invoking make process (see Makefile)-- it is
+# the output of uname -r | sed 's/\./_/g'.
+#
+# We couldn't find any other gmake/unix make portable way to make this
+# work.
+#
+ELIDED_BENCHMARKS_5_8=atomic cachetocache
+ELIDED_BENCHMARKS_5_9=atomic
+
+ELIDED_BENCHMARKS_CMN=cascade_flock
+
+ELIDED_BENCHMARKS=$(ELIDED_BENCHMARKS_CMN) $(ELIDED_BENCHMARKS_$(UNAME_RELEASE))
 
 include ../Makefile.com
 
@@ -45,11 +61,3 @@ UCBLIB=		-lc -L/usr/ucblib -lucb -R/usr/ucblib
 MATHLIB=	-lm
 
 .KEEP_STATE:
-
-
-
-
-
-
-
-
