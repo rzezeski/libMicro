@@ -60,11 +60,14 @@ TARBALL_CONTENTS = 	\
 	benchmark_initworker.c	\
 	benchmark_finiworker.c	\
 	bench		\
+	bench.sh	\
 	mk_tarball	\
 	multiview	\
+	multiview.sh	\
 	OPENSOLARIS.LICENSE	\
 	tattle.c	\
 	wrapper		\
+	wrapper.sh	\
 	README
 
 default $(ALL) run cstyle lint tattle: $(BINS)
