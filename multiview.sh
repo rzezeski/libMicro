@@ -107,8 +107,9 @@ END {
 	printf("<th align=\"right\">USECS</th>\n");
 
 	for (i = 2; i < ARGC; i++) 
-		printf("<th align=\"right\">USECS [percentage]</th></tr>\n");
+		printf("<th align=\"right\">USECS [percentage]</th>\n");
 
+	printf("</tr>\n");
 	for(i = 1; i < benchmark_count; i++) {
 	  for(j = 1; j < benchmark_count; j++) {
 	    if (benchmarks[j] > benchmarks[j + 1]) {
