@@ -21,7 +21,7 @@
  */
 
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -30,7 +30,7 @@
 
 #include <pthread.h>
 
-#define	LIBMICRO_VERSION	"0.3.0"
+#define	LIBMICRO_VERSION	"0.4.0"
 
 #define	STRSIZE			1024
 
@@ -84,11 +84,11 @@ typedef struct {
 	pthread_cond_t		ba_cv;
 #endif
 
-	long long		ba_count;	/* how many ops		*/
-	long long		ba_errors;	/* how many errors 	*/
+	long long		ba_count;	/* how many ops		 */
+	long long		ba_errors;	/* how many errors	 */
 
-	int			ba_quant;	/* how many quant errors*/
-	int			ba_batches;	/* how many samples	*/
+	int			ba_quant;	/* how many quant errors */
+	int			ba_batches;	/* how many samples	 */
 
 	double			ba_starttime;	/* test time start */
 	double			ba_endtime;	/* test time end */
@@ -109,9 +109,9 @@ typedef struct {
 	stats_t			ba_corrected;	/* corrected stats */
 
 	int			ba_outliers;	/* outlier count */
-	
+
 	long long		ba_t0;		/* first thread/proc */
-	long long		ba_t1;		/* time of last thread*/
+	long long		ba_t1;		/* time of last thread */
 	long long		ba_count0;
 	long long		ba_errors0;
 

@@ -26,11 +26,11 @@
 #
 
 #
-# Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
+# Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
 #
 
-bench_version=0.3.0
+bench_version=0.4.0
 libmicro_version=`bin/tattle -V`
 
 case $libmicro_version in
@@ -156,7 +156,7 @@ memset		$OPTS -N "memset_1m"	-s 1m	-I 200000
 memset		$OPTS -N "memset_10m"	-s 10m -I 2000000 
 memset		$OPTS -N "memsetP2_10m"	-s 10m -P 2 -I 2000000 
 
-memrand		$OPTS -N "memrand"	-s 40m -B 10000
+memrand		$OPTS -N "memrand"	-s 128m -B 10000
 cachetocache	$OPTS -N "cachetocache" -s 100k -T 2 -I 200
 
 isatty		$OPTS -N "isatty_yes"   
@@ -178,8 +178,6 @@ close		$OPTS -N "close_bad"		-B 32		-b
 close		$OPTS -N "close_tmp"		-B 32		-f $TFILE
 close		$OPTS -N "close_usr"		-B 32		-f $VFILE
 close		$OPTS -N "close_zero"		-B 32		-f /dev/zero
-close_tcp	$OPTS -N "close_tcp"		-B 32  
-
 
 memcpy		$OPTS -N "memcpy_10"	-s 10	-I 10 
 memcpy		$OPTS -N "memcpy_1k"	-s 1k	-I 50
@@ -480,4 +478,5 @@ pipe		$OPTS -N "pipe_tmp4k"	-s 4k	-I 8000	-x tcp  -m mp
 
 connection	$OPTS -N "conn_accept"		-B 256      -a
 
+close_tcp	$OPTS -N "close_tcp"		-B 32  
 .

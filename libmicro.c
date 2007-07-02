@@ -24,7 +24,7 @@
  */
 
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -94,7 +94,7 @@ int				lm_defS = 0;
 int				lm_defT = 1;
 
 /*
- * default on fast platform, should be overridden by individual 
+ * default on fast platform, should be overridden by individual
  * benchmarks if significantly wrong in either direction.
  */
 
@@ -132,7 +132,7 @@ static void 		worker_process();
 static void 		usage();
 static void 		print_stats(barrier_t *);
 static void 		print_histo(barrier_t *);
-static int 		remove_outliers(double *, int , stats_t *);
+static int 		remove_outliers(double *, int, stats_t *);
 static long long	nsecs_overhead;
 static long long	nsecs_resolution;
 static long long	get_nsecs_overhead();
@@ -297,7 +297,7 @@ actual_main(int argc, char *argv[])
 		(void) fflush(stderr);
 	}
 
-	if (lm_optB == 0) { 
+	if (lm_optB == 0) {
 		/*
 		 * neither benchmark or user has specified the number
 		 * of cnts/sample, so use computed value
@@ -310,7 +310,7 @@ actual_main(int argc, char *argv[])
 			lm_optB = 1;
 	}
 
-	/* 
+	/*
 	 * now that the options are set
 	 */
 
@@ -408,11 +408,11 @@ actual_main(int argc, char *argv[])
 	/* print arguments benchmark was invoked with ? */
 	if (lm_optL) {
 		int l;
-		(void)printf("# %s ", argv[0]);
+		(void) printf("# %s ", argv[0]);
 		for (l = 1; l < argc; l++) {
-			(void)printf("%s ", argv[l]);
+			(void) printf("%s ", argv[l]);
 		}
-		(void)printf("\n");
+		(void) printf("\n");
 	}
 
 	/* print result header (unless suppressed) */
@@ -549,10 +549,40 @@ usage()
 }
 
 void
+print_warnings(barrier_t *b)
+{
+	int head = 0;
+	int increase;
+
+	if (b->ba_quant) {
+		if (!head++) {
+			(void) printf("#\n# WARNINGS\n");
+		}
+		increase = (int)(floor((nsecs_resolution * 100.0) /
+		    ((double)lm_optB * b->ba_corrected.st_median * 1000.0)) +
+		    1.0);
+		(void) printf("#     Quantization error likely;"
+		    "increase batch size (-B option) %dX to avoid.\n",
+		    increase);
+	}
+
+	/*
+	 * XXX should warn on median != mean by a lot
+	 */
+
+	if (b->ba_errors) {
+		if (!head++) {
+			(void) printf("#\n# WARNINGS\n");
+		}
+		(void) printf("#     Errors occured during benchmark.\n");
+	}
+}
+
+void
 print_stats(barrier_t *b)
 {
 	(void) printf("#\n");
-	(void) printf("# STATISTICS         %12s          %12s\n", 
+	(void) printf("# STATISTICS         %12s          %12s\n",
 	    "usecs/call (raw)",
 	    "usecs/call (outliers removed)");
 
@@ -565,32 +595,32 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_min,
 	    b->ba_corrected.st_min);
 
-	(void) printf("#                    max %12.5f            %12.5f\n", 
+	(void) printf("#                    max %12.5f            %12.5f\n",
 	    b->ba_raw.st_max,
 	    b->ba_corrected.st_max);
-	(void) printf("#                   mean %12.5f            %12.5f\n", 
+	(void) printf("#                   mean %12.5f            %12.5f\n",
 	    b->ba_raw.st_mean,
 	    b->ba_corrected.st_mean);
-	(void) printf("#                 median %12.5f            %12.5f\n", 
+	(void) printf("#                 median %12.5f            %12.5f\n",
 	    b->ba_raw.st_median,
 	    b->ba_corrected.st_median);
-	(void) printf("#                 stddev %12.5f            %12.5f\n", 
+	(void) printf("#                 stddev %12.5f            %12.5f\n",
 	    b->ba_raw.st_stddev,
 	    b->ba_corrected.st_stddev);
-	(void) printf("#         standard error %12.5f            %12.5f\n", 
+	(void) printf("#         standard error %12.5f            %12.5f\n",
 	    b->ba_raw.st_stderr,
 	    b->ba_corrected.st_stderr);
-	(void) printf("#   99%% confidence level %12.5f            %12.5f\n", 
+	(void) printf("#   99%% confidence level %12.5f            %12.5f\n",
 	    b->ba_raw.st_99confidence,
 	    b->ba_corrected.st_99confidence);
-	(void) printf("#                   skew %12.5f            %12.5f\n", 
+	(void) printf("#                   skew %12.5f            %12.5f\n",
 	    b->ba_raw.st_skew,
 	    b->ba_corrected.st_skew);
-	(void) printf("#               kurtosis %12.5f            %12.5f\n", 
+	(void) printf("#               kurtosis %12.5f            %12.5f\n",
 	    b->ba_raw.st_kurtosis,
 	    b->ba_corrected.st_kurtosis);
 
-	(void) printf("#       time correlation %12.5f            %12.5f\n", 
+	(void) printf("#       time correlation %12.5f            %12.5f\n",
 	    b->ba_raw.st_timecorr,
 	    b->ba_corrected.st_timecorr);
 	(void) printf("#\n");
@@ -598,7 +628,7 @@ print_stats(barrier_t *b)
 	(void) printf("#           elasped time %12.5f\n", (b->ba_endtime -
 	    b->ba_starttime) / 1.0e9);
 	(void) printf("#      number of samples %12d\n",   b->ba_batches);
- 	(void) printf("#     number of outliers %12d\n", b->ba_outliers);
+	(void) printf("#     number of outliers %12d\n", b->ba_outliers);
 	(void) printf("#      getnsecs overhead %12d\n", (int)nsecs_overhead);
 
 	(void) printf("#\n");
@@ -607,30 +637,7 @@ print_stats(barrier_t *b)
 	print_histo(b);
 
 	if (lm_optW) {
-		int head = 0;
-		if (b->ba_quant) {
-			if (!head++) {
-				int increase = (int)(floor((nsecs_resolution * 100.0)/ 
-				    ((double)lm_optB * b->ba_corrected.st_median *
-				    1000.0)) + 1.0);
-
-				(void) printf("#\n# WARNINGS\n");
-				(void) printf("#     Quantization error likely;"
-				    "increase batch size (-B option) %dX to avoid.\n",
-				    increase);
-			}
-
-			/*
-			 * XXX should warn on median != mean by a lot
-			 */
-
-			if (b->ba_errors) {
-				if (!head++)
-					(void) printf("#\n# WARNINGS\n");
-				(void) printf(
-				    "#     Errors occured during benchmark.\n");
-			}
-		}
+		print_warnings(b);
 	}
 }
 
@@ -663,8 +670,8 @@ update_stats(barrier_t *b, result_t *r)
 		/* last thread only */
 
 
-		time = (double)b->ba_t1 - (double)b->ba_t0 - (double)
-			nsecs_overhead;
+		time = (double)b->ba_t1 - (double)b->ba_t0 -
+		    (double)nsecs_overhead;
 
 		if (time < 100 * nsecs_resolution)
 			b->ba_quant++;
@@ -863,7 +870,7 @@ barrier_create(int hwm, int datasize)
 
 	b->ba_count = 0;
 	b->ba_errors = 0;
-	
+
 	return (b);
 }
 
@@ -970,7 +977,7 @@ getusecs()
 long long
 getnsecs()
 {
-	return (rdtsc() * 1000000000 / lm_hz );
+	return (rdtsc() * 1000000000 / lm_hz);
 }
 
 #else /* USE_GETHRTIME */
@@ -992,7 +999,7 @@ getnsecs()
 
 	(void) gettimeofday(&tv, NULL);
 
-	return ((long long)tv.tv_sec * 1000000000LL + 
+	return ((long long)tv.tv_sec * 1000000000LL +
 	    (long long) tv.tv_usec * 1000LL);
 }
 
@@ -1097,20 +1104,6 @@ sizetoint(const char *arg)
 	return (mult * atoi(arg));
 }
 
-static int
-doublecompare(const void *p1, const void *p2)
-{
-	double			i = *((double *)p1);
-	double			j = *((double *)p2);
-
-	if (i > j)
-		return (1);
-	if (i < j)
-		return (-1);
-	return (0);
-
-}
-
 static void
 print_bar(long count, long total)
 {
@@ -1121,6 +1114,19 @@ print_bar(long count, long total)
 		(void) putchar_unlocked('*');
 	for (; i < 32; i++)
 		(void) putchar_unlocked(' ');
+}
+
+static int
+doublecmp(const void *p1, const void *p2)
+{
+	double a = *((double *)p1);
+	double b = *((double *)p2);
+
+	if (a > b)
+		return (1);
+	if (a < b)
+		return (-1);
+	return (0);
 }
 
 static void
@@ -1150,7 +1156,7 @@ print_histo(barrier_t *b)
 	n = b->ba_batches > b->ba_datasize ? b->ba_datasize : b->ba_batches;
 
 	/* find the 95th percentile - index, value and range */
-	qsort((void *)b->ba_data, n, sizeof (double), doublecompare);
+	qsort((void *)b->ba_data, n, sizeof (double), doublecmp);
 	min = b->ba_data[0] + 0.000001;
 	i95 = n * 95 / 100;
 	p95 = b->ba_data[i95];
@@ -1270,7 +1276,7 @@ compute_stats(barrier_t *b)
 	 * do raw stats
 	 */
 
-	(void)crunch_stats(b->ba_data, b->ba_batches, &b->ba_raw);
+	(void) crunch_stats(b->ba_data, b->ba_batches, &b->ba_raw);
 
 	/*
 	 * recursively apply 3 sigma rule to remove outliers
@@ -1279,33 +1285,19 @@ compute_stats(barrier_t *b)
 	b->ba_corrected = b->ba_raw;
 	b->ba_outliers = 0;
 
-	if (b->ba_batches > 40 ) { /* remove outliers */
+	if (b->ba_batches > 40) { /* remove outliers */
 		int removed;
 
-
 		do {
-			removed = remove_outliers(b->ba_data, b->ba_batches, 
+			removed = remove_outliers(b->ba_data, b->ba_batches,
 			    &b->ba_corrected);
 			b->ba_outliers += removed;
 			b->ba_batches -= removed;
-			(void)crunch_stats(b->ba_data, b->ba_batches, 
-			    &b->ba_corrected);		
+			(void) crunch_stats(b->ba_data, b->ba_batches,
+			    &b->ba_corrected);
 			} while (removed != 0 && b->ba_batches > 40);
 	}
-	
-}
 
-static int
-doublecmp(const void *p1, const void *p2)
-{
-	double a = *((double *) p1);
-	double b = *((double *) p2);
-
-	if (a > b)
-		return (1);
-	if (a < b)
-		return (-1);
-	return (0);
 }
 
 /*
@@ -1323,9 +1315,9 @@ crunch_stats(double *data, int count, stats_t *stats)
 	double mean;
 	int i;
 	int bytes;
-	double * dupdata;
+	double *dupdata;
 
-	/* 
+	/*
 	 * first we need the mean
 	 */
 
@@ -1344,7 +1336,7 @@ crunch_stats(double *data, int count, stats_t *stats)
 	 */
 
 	dupdata = malloc(bytes = sizeof (double) * count);
-	(void)memcpy(dupdata, data, bytes);		
+	(void) memcpy(dupdata, data, bytes);
 	qsort((void *)dupdata, count, sizeof (double), doublecmp);
 	stats->st_median   = dupdata[count/2];
 
@@ -1354,9 +1346,9 @@ crunch_stats(double *data, int count, stats_t *stats)
 	 */
 
 	for (i = 0; i < count; i++)
-		dupdata[i] = (double) i;
+		dupdata[i] = (double)i;
 
-	(void)fit_line(dupdata, data, count, &a, &stats->st_timecorr);
+	(void) fit_line(dupdata, data, count, &a, &stats->st_timecorr);
 	free(dupdata);
 
 	std = 0.0;
@@ -1382,9 +1374,9 @@ crunch_stats(double *data, int count, stats_t *stats)
 	stats->st_stderr   = std / sqrt(count);
 	stats->st_99confidence = stats->st_stderr * 2.326;
 	stats->st_skew	   = sk / (std * std * std) / (double)(count);
-	stats->st_kurtosis = ku / (std * std * std * std) / 
+	stats->st_kurtosis = ku / (std * std * std * std) /
 	    (double)(count) - 3;
-	
+
 	return (0);
 }
 
@@ -1410,17 +1402,17 @@ fit_line(double *x, double *y, int count, double *a, double *b)
 	}
 
 	denom = count * sumx2 - sumx * sumx;
-	
-	if (denom == 0.0 )
+
+	if (denom == 0.0)
 		return (-1);
- 
+
 	*a = (sumy * sumx2 - sumx * sumxy) / denom;
-	    
+
 	*b = (count * sumxy - sumx * sumy) / denom;
 
 	return (0);
 }
-	
+
 /*
  * empty function for measurement purposes
  */
@@ -1430,8 +1422,8 @@ nop()
 {
 	return (1);
 }
-			
-#define NSECITER 1000
+
+#define	NSECITER 1000
 
 static long long
 get_nsecs_overhead()
@@ -1445,31 +1437,31 @@ get_nsecs_overhead()
 	int count;
 	int outliers;
 
-	(void)getnsecs(); /* warmup */
-	(void)getnsecs(); /* warmup */
-	(void)getnsecs(); /* warmup */
+	(void) getnsecs(); /* warmup */
+	(void) getnsecs(); /* warmup */
+	(void) getnsecs(); /* warmup */
 
 	i = 0;
 
 	count = NSECITER;
-	
+
 	for (i = 0; i < count; i++) {
-		s = getnsecs();		
+		s = getnsecs();
 		data[i] = getnsecs() - s;
 	}
-	
-	(void)crunch_stats(data, count, &stats);
 
-	while((outliers = remove_outliers(data, count, &stats)) != 0) {
+	(void) crunch_stats(data, count, &stats);
+
+	while ((outliers = remove_outliers(data, count, &stats)) != 0) {
 		count -= outliers;
-		(void)crunch_stats(data, count, &stats);
+		(void) crunch_stats(data, count, &stats);
 	}
-	
-	return ((long long)stats.st_mean); 
+
+	return ((long long)stats.st_mean);
 
 }
 
-long long 
+long long
 get_nsecs_resolution()
 {
 	long long y[1000];
@@ -1521,7 +1513,7 @@ get_nsecs_resolution()
 
 	for (i = 1; i < 1000; i++) {
 		int diff = y[i] - y[i-1];
-	
+
 		if (diff > 0 && res > diff)
 			res = diff;
 
@@ -1535,7 +1527,7 @@ get_nsecs_resolution()
  */
 
 static int
-remove_outliers(double *data, int count, stats_t * stats)
+remove_outliers(double *data, int count, stats_t *stats)
 {
 	double outmin = stats->st_mean - 3 * stats->st_stddev;
 	double outmax = stats->st_mean + 3 * stats->st_stddev;

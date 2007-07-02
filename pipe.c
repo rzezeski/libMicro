@@ -24,7 +24,7 @@
  */
 
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -84,7 +84,7 @@ static void			*rbuf = NULL;
 static void			*wbuf = NULL;
 
 int readall(int s, void *buf, size_t len);
-void * loopback(void *arg);
+void *loopback(void *arg);
 int prepare_pipes(tsd_t *tsd);
 int prepare_fifos(tsd_t *tsd);
 int cleanup_fifos(tsd_t *tsd);
@@ -164,6 +164,7 @@ benchmark_initbatch(void *tsd)
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			result;
 	pid_t			pid;
+	int			i;
 
 	switch (optx) {
 	case XP_SOCKETPAIR:
@@ -210,6 +211,14 @@ benchmark_initbatch(void *tsd)
 		break;
 	}
 
+	/* Prime the loopback */
+	if (write(ts->ts_out, wbuf, opts) != opts) {
+		return (1);
+	}
+	if (readall(ts->ts_in, rbuf, opts) != opts) {
+		return (1);
+	}
+
 	return (0);
 }
 
@@ -242,17 +251,20 @@ benchmark_finibatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
+	/* Terminate the loopback */
+	(void) write(ts->ts_out, wbuf, opts);
+	(void) readall(ts->ts_in, rbuf, opts);
+
 	switch (optm) {
 	case MD_MULTITHREAD:
-		(void) pthread_join(ts->ts_thread, NULL);
 		(void) close(ts->ts_in2);
 		(void) close(ts->ts_out2);
+		(void) pthread_join(ts->ts_thread, NULL);
 		break;
 	case MD_MULTIPROCESS:
-		(void) kill(ts->ts_child, SIGKILL);
-		(void) waitpid(ts->ts_child, NULL, 0);
 		(void) close(ts->ts_in2);
 		(void) close(ts->ts_out2);
+		(void) waitpid(ts->ts_child, NULL, 0);
 		break;
 	case MD_SINGLE:
 	default:
@@ -285,7 +297,6 @@ readall(int s, void *buf, size_t len)
 {
 	size_t			n;
 	size_t			total = 0;
-	int			count = 0;
 
 	for (;;) {
 		n = read(s, (void *)((long)buf + total), len - total);
@@ -293,9 +304,8 @@ readall(int s, void *buf, size_t len)
 			return (-1);
 		}
 		total += n;
-		count++;
-		if (total == len) {
-			return (count);
+		if (total >= len) {
+			return (total);
 		}
 	}
 }
@@ -304,15 +314,18 @@ void *
 loopback(void *arg)
 {
 	tsd_t			*ts = (tsd_t *)arg;
-	int			i, n;
+	int			i, n, m;
 
-	for (i = 0; i < lm_optB; i++) {
+	/* Include priming and termination */
+	m = lm_optB + 2;
+
+	for (i = 0; i < m; i++) {
 		n = readall(ts->ts_in2, rbuf, opts);
 		if (n == -1) {
-			continue;
+			break;
 		}
 		if (write(ts->ts_out2, wbuf, opts) != opts) {
-			continue;
+			break;
 		}
 	}
 

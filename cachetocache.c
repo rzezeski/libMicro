@@ -24,7 +24,7 @@
  */
 
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
+ * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
 
@@ -48,7 +48,7 @@
 
 #include "libmicro.h"
 
-static long	opts = 1024*512;
+static long			opts = 1024*512;
 
 typedef struct {
 	long			**ts_data;
