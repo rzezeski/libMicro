@@ -152,7 +152,7 @@ actual_main(int argc, char *argv[])
 	char			*tmp;
 	char			optstr[256];
 	barrier_t		*b;
-	long long		startnsecs = getnsecs();
+	long long		startnsecs;
 
 #ifdef USE_RDTSC
 	if (getenv("LIBMICRO_HZ") == NULL) {
@@ -161,6 +161,8 @@ actual_main(int argc, char *argv[])
 	}
 	lm_hz = strtoll(getenv("LIBMICRO_HZ"), NULL, 10);
 #endif
+
+	startnsecs = getnsecs();
 
 	lm_argc = argc;
 	lm_argv = argv;
