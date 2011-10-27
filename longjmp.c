@@ -51,7 +51,7 @@ benchmark_init()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i = 0;
+	volatile int		i = 0;
 	jmp_buf			env;
 
 	(void) setjmp(env);

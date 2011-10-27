@@ -56,7 +56,7 @@ benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	int i = 0;
+	volatile int i = 0;
 
 	(void) sigsetjmp(ts->ts_env, 1);
 
