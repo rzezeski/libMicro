@@ -104,9 +104,9 @@ libmicro.a:	libmicro.o libmicro_main.o $(BENCHMARK_FUNCS)
 		$(AR) -cr libmicro.a libmicro.o libmicro_main.o $(BENCHMARK_FUNCS)
 
 tattle:		../tattle.c	libmicro.a
-	echo "char * compiler_version = \""`$(COMPILER_VERSION_CMD)`"\";" > tattle.h
-	echo "char * CC = \""$(CC)"\";" >> tattle.h
-	echo "char * extra_compiler_flags = \""$(extra_CFLAGS)"\";" >> tattle.h
+	echo "char compiler_version[] = \""`$(COMPILER_VERSION_CMD)`"\";" > tattle.h
+	echo "char CC[] = \""$(CC)"\";" >> tattle.h
+	echo "char extra_compiler_flags[] = \""$(extra_CFLAGS)"\";" >> tattle.h
 	$(CC) -o tattle $(CFLAGS) -I. ../tattle.c libmicro.a -lrt -lm
 
 $(ELIDED_BENCHMARKS):	../elided.c
