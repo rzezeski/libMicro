@@ -1,4 +1,5 @@
 bin-*/
+bin-.*/
 bench
 multiview
 wrapper
