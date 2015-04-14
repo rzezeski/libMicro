@@ -6,16 +6,17 @@ of Sun Microsystems (1) as part of their "if Linux is faster it's a
 Solaris bug" campaign. The code mostly "just works" but has atrophied
 slightly over the years.
 
-This is a fork by Ryan Zezeski. My intentions are to squash bugs, add
-missing syscalls, and make sure this works on as many platforms as
+This is a fork by Ryan Zezeski, not be confused with Peter Portante's
+"fork" (2), which has seen no development. Starting source pulled
+from the java.net projects page (3). My intentions are to squash bugs,
+add missing syscalls, and make sure this works on as many platforms as
 possible. I also plan to document everything—extensively.
-
-My fork should not be confused with Peter Portante's "fork" (2), which
-was more of a copy over to github. It has seen no development.
 
 (1): https://blogs.oracle.com/barts/entry/libmicro_opensourced
 
 (2): https://github.com/portante/libMicro
+
+(3): https://java.net/projects/libmicro
 
 
 LICENSE
