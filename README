@@ -1,69 +1,66 @@
-#
-# CDDL HEADER START
-#
-# The contents of this file are subject to the terms
-# of the Common Development and Distribution License
-# (the "License").  You may not use this file except
-# in compliance with the License.
-#
-# You can obtain a copy of the license at
-# src/OPENSOLARIS.LICENSE
-# or http://www.opensolaris.org/os/licensing.
-# See the License for the specific language governing
-# permissions and limitations under the License.
-#
-# When distributing Covered Code, include this CDDL
-# HEADER in each file and include the License file at
-# usr/src/OPENSOLARIS.LICENSE.  If applicable,
-# add the following below this CDDL HEADER, with the
-# fields enclosed by brackets "[]" replaced with your
-# own identifying information: Portions Copyright [yyyy]
-# [name of copyright owner]
-#
-# CDDL HEADER END
-#
+A portable set of microbenchmarks focused on the syscall and system
+library interfaces.
 
-#
-# Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
-# Use is subject to license terms.
-#
+Originally made open source in 2005 by Bart Smaalders and Phil Harman
+of Sun Microsystems (1) as part of their "if Linux is faster it's a
+Solaris bug" campaign. The code mostly "just works" but has atrophied
+slightly over the years.
 
-Building the tarball
---------------------
-As long as cc is in your path, (gcc on Linux),
+This is a fork by Ryan Zezeski. My intentions are to squash bugs, add
+missing syscalls, and make sure this works on as many platforms as
+possible. I also plan to document everything—extensively.
 
-% tar xf libMicro.tar
-% make
+My fork should not be confused with Peter Portante's "fork" (2), which
+was more of a copy over to github. It has seen no development.
 
-will build the benchmark suite.
+(1): https://blogs.oracle.com/barts/entry/libmicro_opensourced
 
-Running the benchmarks
------------------------
+(2): https://github.com/portante/libMicro
 
-A set of generic scripts to invoke each micro benchmark
-are created in the bin directory; these may be invoked
-directly.  Note that the actual binaries are created in
-OS-specific directories; this allows one to build for
-all varients (x86/sparc/Solaris/Linux) in one place.
 
-To collect a complete set of benchmarks, use the bench
-script and redirect its output to a file.
+LICENSE
 
-% ./bench > output
+This code is supplied under the terms of the Common Development and
+Distribution License ("CDDL"), version 1.0. A full copy of the license
+is found in the file OPENSOLARIS.LICENSE, or on the net at
+http://www.illumos.org/license/CDDL.
 
-To compare the output of two or more runs, use multiview in the src
-directory:
 
-% ./multiview reference compare1 compare2 compare2 > compare.html
-%
+BUILDING
 
-where the reference and compare files contain the output of different
-libmicro runs.
+You'll need a C compiler and make.
 
-The compare.html file will allow quick comparisons to be drawn,
-allowing a variety of experiments to be quickly analyzed.
+$ make
 
-All benchmarks support the following options:
+
+RUNNING
+
+Benchmarks can be run individually and take many options, but the
+easiest way to get started is to run the master bench script.
+
+$ ./bench | tee bench.out
+
+You'll want to collect the output in a file because there is a lot of
+it and it serves as input for the `multiview` script that allows you
+to compare multiple benchmark runs.
+
+
+COMPARE
+
+You can compare two or more runs with the multiview script. The first
+argument is the reference benchmark which all the other inputs will be
+compared to. The generated HTML will use a red/green color gradient to
+convey how far above or below each run was compared to the reference
+run. For example, if I wanted to prove that illumos was beating Linux
+I would generate the following compare:
+
+$ ./multiview bench-linux.out bench-illumos.out > compare.html
+
+
+OPTIONS
+
+These are options that apply to all benchmarks and can be passed
+directly to a test or by modifying `OPTS` in `bench`.
 
        [-1] (single process; overrides -P > 1)
        [-A] (align with clock)
@@ -81,5 +78,3 @@ All benchmarks support the following options:
        [-T threads (default 1)]
        [-V] (print the libMicro version and exit)
        [-W] (flag possible benchmark problems)
-
-
