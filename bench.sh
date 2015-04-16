@@ -65,7 +65,7 @@ mkdir -p $VDIR1 $VDIR2
 
 touch $IFILE
 
-ARCH=`arch -k`
+ARCH=`uname -p`
 
 # produce benchmark header for easier comparisons
 
@@ -89,7 +89,7 @@ printf "!Machine_name: %30s\n" $hostname
 printf "!OS_name:      %30s\n" `uname -s`
 printf "!OS_release:   %30s\n" `uname -r`
 printf "!OS_build:     %30.18s\n" "`uname -v`"
-printf "!Processor:    %30s\n" `uname -m`
+printf "!Processor:    %30s\n" `uname -p`
 printf "!#CPUs:        %30s\n" $p_count
 printf "!CPU_MHz:      %30s\n" $p_mhz
 printf "!CPU_NAME:     %30s\n" "$p_type"

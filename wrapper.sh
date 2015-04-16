@@ -32,6 +32,6 @@
 
 BASENAME=`basename $0`
 DIRNAME=`dirname $0`
-ARCH=`uname -m`
+ARCH=`uname -p`
 
 exec $DIRNAME/../bin-$ARCH/$BASENAME "$@"
