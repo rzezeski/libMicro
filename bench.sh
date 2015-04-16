@@ -45,7 +45,7 @@ TMPROOT=/tmp/libmicro.$$
 VARROOT=/var/tmp/libmicro.$$
 mkdir -p $TMPROOT
 mkdir -p $VARROOT
-trap "rm -rf $TMPROOT $VARROOT" 0 2
+trap "rm -rf $TMPROOT $VARROOT; exit 1" 0 2
 
 TFILE=$TMPROOT/data
 IFILE=$TMPROOT/ifile
