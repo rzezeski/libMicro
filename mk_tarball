@@ -21,7 +21,7 @@ here=`pwd`
 target=$here/libMicro.tar
 tmpdir=/tmp/libmicro.$$
 mkdir -p $tmpdir/$dirname
-cp $* $tmpdir/$dirname
+cp -r $* $tmpdir/$dirname
 cd $tmpdir
 tar cvf $target $dirname
 cd $here
