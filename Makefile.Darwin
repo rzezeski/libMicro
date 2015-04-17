@@ -13,10 +13,8 @@
 # Copyright 2015 Ryan Zezeski
 #
 
-
 CC=		cc
 
-#CFLAGS=		-O -DUSE_SEMOP
 CPPFLAGS=	-DUSE_SEMOP -D_REENTRANT
 MATHLIB=	-lm
 
@@ -30,6 +28,5 @@ ELIDED_BENCHMARKS=	\
 	getcontext	\
 	mmap		\
 	setcontext
-
 
 include ../Makefile.com

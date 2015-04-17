@@ -30,8 +30,8 @@
 
 include ../Makefile.benchmarks
 
-EXTRA_CFILES= \
-		exec_bin.c 	\
+CFLAGS=-m64 -std=c99 -O2
+EXTRA_CFILES=	exec_bin.c 	\
 		elided.c	\
 		tattle.c
 
@@ -44,7 +44,7 @@ COMPILER_VERSION_CMD=$(COMPILER_VERSION_CMD_$(CC))
 
 default: $(ALL) tattle
 
-cstyle:	
+cstyle:
 	for file in $(ALL:%=../src/%.c) $(EXTRA_CFILES:%=../%) ; \
 	do cstyle -p $$file ;\
 	done
@@ -60,7 +60,7 @@ $(EXTRA_CFILES:%.c=%.lint):
 	$(LINT) -mu $(CPPFLAGS) $< libmicro.ln -lpthread -lsocket -lnsl -lm
 
 %.o:	../src/%.c
-	$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS) $($(basename $@)_EXTRA_CPPFLAGS) $(CPPFLAGS) $< -o $@
 
 libmicro.ln: ../libmicro.c ../libmicro_main.c ../libmicro.h ../benchmark_*.c
 	$(LINT) -muc $(CPPFLAGS) ../libmicro.c ../libmicro_main.c ../benchmark_*.c
