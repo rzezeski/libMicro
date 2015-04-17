@@ -33,39 +33,22 @@ include Makefile.benchmarks
 
 BINS=		$(ALL:%=bin/%) bin/tattle
 
-TARBALL_CONTENTS = 	\
-	Makefile.benchmarks \
-	Makefile.SunOS 	\
-	Makefile.Linux 	\
-	Makefile.Aix 	\
-	Makefile.com 	\
-	Makefile	\
-	$(ALL:%=%.c)	\
-	elided.c	\
-	exec_bin.c	\
-	libmicro.c	\
-	libmicro_main.c	\
-	libmicro.h	\
-	recurse2.c	\
-	benchmark_finibatch.c 	\
-	benchmark_initbatch.c	\
-	benchmark_optswitch.c	\
-	benchmark_fini.c	\
-	benchmark_init.c	\
-	benchmark_result.c	\
-	benchmark_finirun.c	\
-	benchmark_initrun.c	\
-	benchmark_initworker.c	\
-	benchmark_finiworker.c	\
-	bench		\
-	bench.sh	\
-	mk_tarball	\
-	multiview	\
-	multiview.sh	\
+TARBALL_CONTENTS = 		\
+	Makefile.benchmarks 	\
+	Makefile.SunOS 		\
+	Makefile.Linux 		\
+	Makefile.Aix 		\
+	Makefile.com 		\
+	Makefile		\
+	bench			\
+	bench.sh		\
+	mk_tarball		\
+	multiview		\
+	multiview.sh		\
+	src/			\
 	OPENSOLARIS.LICENSE	\
-	tattle.c	\
-	wrapper		\
-	wrapper.sh	\
+	wrapper			\
+	wrapper.sh		\
 	README
 
 default $(ALL) run cstyle lint tattle: $(BINS)
@@ -78,7 +61,7 @@ default $(ALL) run cstyle lint tattle: $(BINS)
 clean:
 	rm -rf bin bin-* wrapper multiview bench
 
-bin:	
+bin:
 	@mkdir -p bin
 
 $(BINS): bin
@@ -90,6 +73,6 @@ $(BINS): bin
 libMicro.tar:	FORCE
 	@chmod +x ./mk_tarball wrapper
 	@./mk_tarball $(TARBALL_CONTENTS) 
- 
+
 FORCE:
 
