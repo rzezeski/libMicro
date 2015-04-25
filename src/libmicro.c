@@ -23,7 +23,6 @@
 #include <sys/wait.h>
 #include <ctype.h>
 #include <string.h>
-#include <strings.h>
 #include <signal.h>
 #include <stdio.h>
 #include <unistd.h>

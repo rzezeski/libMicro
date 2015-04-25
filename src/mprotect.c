@@ -33,7 +33,7 @@
 #include <stdio.h>
 #include <sys/mman.h>
 #include <fcntl.h>
-#include <strings.h>
+#include <string.h>
 
 #include "libmicro.h"
 
