@@ -10,6 +10,8 @@
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
+ *
  * Copyright (c) 2002, 2012, Oracle and/or its affiliates. All rights reserved.
  * Use is subject to license terms.
  */
@@ -37,16 +39,16 @@ typedef struct {
 #define	GIGABYTE		(1024 * 1024 * 1024)
 
 static char			*optf = DEFF;
-static long long		optl = 0;
-static long long		optp = 0;
+static size_t			optl = 0;
+static size_t			optp = 0;
 static int			optr = 0;
 static int			opts = 0;
 static int			optw = 0;
 static int			fd = -1;
 static int			anon = 0;
 
-static long long		def_optl;
-static long long		def_optp;
+static size_t			def_optl;
+static size_t			def_optp;
 static int			npagesizes = 1;
 static size_t			*pagesizes;
 
@@ -100,8 +102,8 @@ benchmark_init()
 
 	(void) sprintf(lm_usage,
 	    "       [-f file-to-map (default %s)]\n"
-	    "       [-l mapping-length (default %lld)]\n"
-	    "       [-p page-size (default %lld)]\n"
+	    "       [-l mapping-length (default %zu)]\n"
+	    "       [-p page-size (default %zu)]\n"
 	    "       [-r] (read a byte from each page)\n"
 	    "       [-w] (write a byte on each page)\n"
 	    "       [-s] (use MAP_SHARED)\n"
@@ -158,7 +160,7 @@ benchmark_initrun()
 			}
 		}
 		if (i == npagesizes) {
-			printf("Invalid page size: %lld\n", optp);
+			printf("Invalid page size: %zu\n", optp);
 			exit(1);
 		}
 	}
@@ -175,7 +177,7 @@ benchmark_initrun()
 	if (optl == def_optl) {
 		optl = optp * 2;
 	} else if (optl % optp != 0) {
-		printf("map length %lld must be aligned to page size %lld\n",
+		printf("map length %zu must be aligned to page size %zu\n",
 		    optl, optp);
 		exit(1);
 	}
@@ -207,7 +209,7 @@ benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
-	unsigned long		j;
+	size_t			j;
 
 	/*
 	 * XXX disable for now because
@@ -296,7 +298,7 @@ benchmark_result()
 	flags[3] = opts ? 's' : '-';
 	flags[4] = 0;
 
-	(void) sprintf(result, "%8lld %5s %8lld", optl, flags, optp);
+	(void) sprintf(result, "%8zu %5s %8zu", optl, flags, optp);
 
 	return (result);
 }

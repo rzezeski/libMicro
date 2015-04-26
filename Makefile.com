@@ -21,7 +21,7 @@ EXTRA_CFILES=	exec_bin.c 	\
 		elided.c	\
 		tattle.c
 
-CFLAGS+=-std=c99 -m64 -Wall -Werror
+CFLAGS+=-std=c99 -m64 -Wall -Wextra -Wno-unused-parameter -Werror
 
 #
 # Assume GCC or LLVM.

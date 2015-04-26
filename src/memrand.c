@@ -95,7 +95,7 @@ benchmark_initworker(void *tsd)
 	 * use lmbench style backwards stride
 	 */
 
-	for (i = 0; i < opts / sizeof (long); i++) {
+	for (i = 0; i < (int)(opts / sizeof (long)); i++) {
 		j = i - 128;
 		if (j < 0)
 			j = j + opts / sizeof (long);

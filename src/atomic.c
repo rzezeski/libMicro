@@ -55,7 +55,7 @@ static unsigned int value = 0;
 int
 benchmark(void *tsd, result_t *res)
 {
-	unsigned int			i;
+	int i;
 	for (i = 0; i < lm_optB; i += 10) {
 		(void) atomic_add_32_nv(&value, 1);
 		(void) atomic_add_32_nv(&value, 1);

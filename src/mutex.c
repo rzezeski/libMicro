@@ -155,9 +155,9 @@ benchmark_initworker(void *tsd)
 }
 
 void
-spinme(int usecs)
+spinme(uint64_t usecs)
 {
-	long long s = getusecs();
+	uint64_t s = getusecs();
 
 	while (getusecs() - s < usecs)
 		;

@@ -1004,7 +1004,7 @@ getnsecs()
 #endif /* USE_GETHRTIME */
 
 int
-setfdlimit(int limit)
+setfdlimit(unsigned int limit)
 {
 	struct rlimit rlimit;
 

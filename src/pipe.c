@@ -64,7 +64,7 @@ static char			*xports[] = {"pipe", "fifo", "sock", "tcp",
 #define	DEFX			XP_PIPES
 
 static int			optm = DEFM;
-static size_t			opts = DEFS;
+static ssize_t			opts = DEFS;
 static int			optx = DEFX;
 static void			*rbuf = NULL;
 static void			*wbuf = NULL;

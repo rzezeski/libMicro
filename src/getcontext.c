@@ -53,7 +53,7 @@ benchmark_init()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
+	volatile int i;
 
 	for (i = 0; i < lm_optB; i += 10) {
 		ucontext_t uc;
