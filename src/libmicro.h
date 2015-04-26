@@ -178,7 +178,7 @@ int 		gettindex();
 void 		*gettsd(int p, int t);
 uint64_t 	getusecs();
 uint64_t 	getnsecs();
-int 		setfdlimit(int limit);
+int 		setfdlimit(unsigned int limit);
 long long 	sizetoll();
 int 		sizetoint();
 int		fit_line(double *, double *, int, double *, double *);
