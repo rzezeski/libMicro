@@ -28,10 +28,8 @@
 # Use is subject to license terms.
 #
 
-
-CPPFLAGS=		-DUSE_GETHRTIME -D_REENTRANT
-
-CFLAGS = -m64 -O $(extra_CFLAGS)
+CPPFLAGS=-DUSE_GETHRTIME -D_REENTRANT -D_XOPEN_SOURCE=600 -D__EXTENSIONS__
+CFLAGS=-O $(extra_CFLAGS)
 
 #
 # These defines allow libmicro to be compiled against older Solaris

@@ -57,13 +57,19 @@ benchmark_init()
 
 	(void) sprintf(lm_optstr, "f:l:p:rsw");
 
-#ifdef __sun
-	/* determine available page sizes before parsing options */
-	npagesizes = getpagesizes(NULL, 0);
-	if (npagesizes <= 0) {
-		return (-1);
-	}
-#endif
+	/*
+	 * XXX disable for now because
+	 * C99/_XOPEN_SOURCE=600/__EXTENSIONS__ doesn't expose this
+	 * interface
+	 */
+
+/* #ifdef __sun */
+/* 	/\* determine available page sizes before parsing options *\/ */
+/* 	npagesizes = getpagesizes2(NULL, 0); */
+/* 	if (npagesizes <= 0) { */
+/* 		return (-1); */
+/* 	} */
+/* #endif */
 
 	pagesizes = malloc(npagesizes * sizeof (size_t));
 	if (pagesizes == NULL) {
@@ -72,11 +78,17 @@ benchmark_init()
 
 	pagesizes[0] = sysconf(_SC_PAGESIZE);
 
-#ifdef __sun
-	if (getpagesizes(pagesizes, npagesizes) != npagesizes) {
-		return (-1);
-	}
-#endif
+	/*
+	 * XXX disable for now because
+	 * C99/_XOPEN_SOURCE=600/__EXTENSIONS__ doesn't expose this
+	 * interface
+	 */
+
+/* #ifdef __sun */
+/* 	if (getpagesizes2(pagesizes, npagesizes) != npagesizes) { */
+/* 		return (-1); */
+/* 	} */
+/* #endif */
 
 	/* pick a default for mapping length and page size */
 	def_optp = pagesizes[0];
@@ -196,13 +208,20 @@ benchmark(void *tsd, result_t *res)
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
 	unsigned long		j;
-#ifdef __sun
-	struct memcntl_mha	marg;
 
-	marg.mha_cmd = MHA_MAPSIZE_VA;
-	marg.mha_flags = 0;
-	marg.mha_pagesize = optp;
-#endif
+	/*
+	 * XXX disable for now because
+	 * C99/_XOPEN_SOURCE=600/__EXTENSIONS__ doesn't expose this
+	 * interface
+	 */
+
+/* #ifdef __sun */
+/* 	struct memcntl_mha	marg; */
+
+/* 	marg.mha_cmd = MHA_MAPSIZE_VA; */
+/* 	marg.mha_flags = 0; */
+/* 	marg.mha_pagesize = optp; */
+/* #endif */
 
 	for (i = 0; i < lm_optB; i++) {
 		if (anon) {
@@ -221,14 +240,21 @@ benchmark(void *tsd, result_t *res)
 			res->re_errors++;
 			continue;
 		}
-#ifdef __sun
-		if ((optp != def_optp) &&
-		    memcntl((caddr_t)ts->ts_map[i], optl, MC_HAT_ADVISE,
-		    (caddr_t)&marg, 0, 0) == -1) {
-			res->re_errors++;
-			continue;
-		}
-#endif
+
+	/*
+	 * XXX disable for now because
+	 * C99/_XOPEN_SOURCE=600/__EXTENSIONS__ doesn't expose this
+	 * interface
+	 */
+
+/* #ifdef __sun */
+/* 		if ((optp != def_optp) && */
+/* 		    memcntl((caddr_t)ts->ts_map[i], optl, MC_HAT_ADVISE, */
+/* 		    (caddr_t)&marg, 0, 0) == -1) { */
+/* 			res->re_errors++; */
+/* 			continue; */
+/* 		} */
+/* #endif */
 
 		if (optr) {
 			for (j = 0; j < optl; j += optp) {

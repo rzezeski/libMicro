@@ -17,12 +17,11 @@
 
 include ../Makefile.benchmarks
 
-EXTRA_CFILES= 			\
-		exec_bin.c 	\
+EXTRA_CFILES=	exec_bin.c 	\
 		elided.c	\
 		tattle.c
 
-CFLAGS+=-Wall -Werror
+CFLAGS+=-std=c99 -m64 -Wall -Werror
 
 #
 # Assume GCC or LLVM.
@@ -91,10 +90,12 @@ libmicro.a:	libmicro.o libmicro_main.o $(BENCHMARK_FUNCS)
 		$(AR) -cr libmicro.a libmicro.o libmicro_main.o $(BENCHMARK_FUNCS)
 
 tattle:		../src/tattle.c	libmicro.a
-	echo "char compiler_version[] = \""`$(COMPILER_VERSION_CMD)`"\";" > tattle.h
+	echo "char compiler_version[] = \""`$(COMPILER_VERSION_CMD)`"\";" > \
+		tattle.h
 	echo "char CC[] = \""$(CC)"\";" >> tattle.h
 	echo "char extra_compiler_flags[] = \""$(extra_CFLAGS)"\";" >> tattle.h
-	$(CC) -o tattle $(CFLAGS) -I. ../src/tattle.c libmicro.a -lm -pthread $(EXTRA_LIBS)
+	$(CC) -o $(@) $(CFLAGS) -I. $< $(CPPFLAGS) \
+		libmicro.a -lm -pthread $(EXTRA_LIBS)
 
 $(ELIDED_BENCHMARKS):	../src/elided.c
 	$(CC) -o $(@) ../src/elided.c
