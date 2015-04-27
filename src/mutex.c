@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -108,50 +95,39 @@ int
 benchmark_initrun()
 {
 	pthread_mutexattr_t	attr;
-	int errors = 0;
 
-	/*LINTED*/
 	lock = (pthread_mutex_t *)mmap(NULL,
 	    getpagesize(),
 	    PROT_READ | PROT_WRITE,
 	    optp?(MAP_ANON | MAP_SHARED):MAP_ANON|MAP_PRIVATE,
 	    -1, 0L) + opto;
 
-	if (lock == MAP_FAILED) {
-		errors++;
-	} else {
-		(void) pthread_mutexattr_init(&attr);
-		if (optp)
-			(void) pthread_mutexattr_setpshared(&attr,
-			    PTHREAD_PROCESS_SHARED);
+	LM_CHK(lock != MAP_FAILED);
 
-		if (pthread_mutex_init(lock, &attr) != 0)
-			errors++;
-	}
+	(void) pthread_mutexattr_init(&attr);
+	if (optp)
+		(void) pthread_mutexattr_setpshared(&attr,
+		    PTHREAD_PROCESS_SHARED);
 
-	return (errors);
+	LM_CHK(pthread_mutex_init(lock, &attr) == 0);
+
+	return (0);
 }
 
 int
 benchmark_initworker(void *tsd)
 {
-	int errors = 0;
 	tsd_t			*ts = (tsd_t *)tsd;
 
-
 	if (optt) {
-		pthread_t		tid;
+		pthread_t	tid;
 
-
-
-		if (pthread_create(&tid, NULL, dummy, NULL) != 0) {
-			errors++;
-		}
+		LM_CHK(pthread_create(&tid, NULL, dummy, NULL) == 0);
 	}
 
 	ts->ts_lock = lock;
 
-	return (errors);
+	return (0);
 }
 
 void

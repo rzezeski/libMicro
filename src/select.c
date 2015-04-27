@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -120,13 +107,7 @@ benchmark_initrun()
 		return (-1);
 	}
 
-	fds = (int *)malloc(optn * sizeof (int));
-	if (fds == NULL) {
-		(void) printf("ERROR: malloc() failed\n");
-		optn = optr = optw = 0;
-		return (-1);
-	}
-
+	LM_CHK((fds = (int *)malloc(optn * sizeof (int))) != NULL);
 	(void) setfdlimit(optn + 10);
 
 	target = optr + optw;
@@ -135,10 +116,7 @@ benchmark_initrun()
 	FD_ZERO(&oset);
 
 	for (i = 0; i < optn; i += 2) {
-		if (socketpair(PF_UNIX, SOCK_STREAM, 0, pair) == -1) {
-			(void) printf("ERROR: socketpair() failed\n");
-			return (-1);
-		}
+		LM_CHK(socketpair(PF_UNIX, SOCK_STREAM, 0, pair) == 0);
 
 		fds[i] = MIN(pair[0], pair[1]);
 		fds[i+1] = MAX(pair[0], pair[1]);
@@ -158,11 +136,11 @@ benchmark_initrun()
 	}
 	if (optx) {
 		for (i = 0, j = optn - 1; i < optr; i++, j--) {
-			(void) write(fds[j+1 - (2*(j%2))], "", 1);
+			LM_CHK(write(fds[j+1 - (2*(j%2))], "", 1) == 1);
 		}
 	} else {
 		for (i = 0; i < optr; i++) {
-			(void) write(fds[i+1 - (2*(i%2))], "", 1);
+			LM_CHK(write(fds[i+1 - (2*(i%2))], "", 1) == 1);
 		}
 	}
 
@@ -188,9 +166,7 @@ benchmark(void *tsd, result_t *res)
 		(void) memcpy(&set1, &iset, sizeof (fd_set));
 		(void) memcpy(&set2, &oset, sizeof (fd_set));
 
-		if (select(maxfd, my_iset, my_oset, NULL, &tv) != target) {
-			res->re_errors++;
-		}
+		LM_CHK(select(maxfd, my_iset, my_oset, NULL, &tv) == target);
 	}
 	res->re_count = i;
 

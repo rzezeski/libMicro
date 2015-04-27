@@ -267,21 +267,13 @@ actual_main(int argc, char *argv[])
 			lm_optB = 1;
 	}
 
-	if (benchmark_initrun() == -1) {
-		exit(1);
-	}
+	LM_CHK(benchmark_initrun() != -1);
 
 	/* Allocate dynamic data. */
 	pids = (pid_t *)malloc(lm_optP * sizeof (pid_t));
-	if (pids == NULL) {
-		perror("malloc(pids)");
-		exit(1);
-	}
+	LM_CHK(pids != NULL);
 	tids = (pthread_t *)malloc(lm_optT * sizeof (pthread_t));
-	if (tids == NULL) {
-		perror("malloc(tids)");
-		exit(1);
-	}
+	LM_CHK(tids != NULL);
 
 	/*
 	 * Check that the case defines lm_tsdsize before proceeding.
@@ -351,13 +343,34 @@ actual_main(int argc, char *argv[])
 		/* Wait for worker processes. */
 		for (i = 0; i < lm_optP; i++) {
 			if (pids[i] > 0) {
-				(void) waitpid(pids[i], NULL, 0);
+				int chldstat = 0;
+
+				(void) waitpid(pids[i], &chldstat, 0);
+
+				/*
+				 * If the benchmark failed there is no
+				 * more work to be done.
+				 */
+				if (chldstat != 0) {
+					exit(1);
+				}
 			}
 		}
 	}
 
 	b->ba_endtime = getnsecs();
 	compute_stats(b);
+
+	/* Cleanup. */
+	(void) benchmark_finirun();
+	(void) benchmark_fini();
+
+	if (lm_optE) {
+		(void) fprintf(stderr, " for %12.5f seconds\n",
+		    (double)(getnsecs() - startnsecs) /
+		    1.e9);
+		(void) fflush(stderr);
+	}
 
 	/* Print benchmark arguments. */
 	if (lm_optL) {
@@ -371,17 +384,17 @@ actual_main(int argc, char *argv[])
 
 	/* Print result header. */
 	if (!lm_optH) {
-		(void) printf("%12s %3s %3s %12s %12s %8s %8s %s\n",
+		(void) printf("%12s %3s %3s %12s %12s %8s %s\n",
 		    "", "prc", "thr",
 		    "usecs/call",
-		    "samples", "errors", "cnt/samp", lm_header);
+		    "samples", "cnt/samp", lm_header);
 	}
 
 	/* Print result. */
-	(void) printf("%-12s %3d %3d %12.5f %12d %8lld %8d %s\n",
+	(void) printf("%-12s %3d %3d %12.5f %12d %8d %s\n",
 	    lm_optN, lm_optP, lm_optT,
 	    (lm_optM?b->ba_corrected.st_mean:b->ba_corrected.st_median),
-	    b->ba_batches, b->ba_errors, lm_optB,
+	    b->ba_batches, lm_optB,
 	    benchmark_result());
 
 	if (lm_optS) {
@@ -392,32 +405,23 @@ actual_main(int argc, char *argv[])
 	(void) fflush(stdout);
 	(void) fflush(stderr);
 
-	/* Cleanup. */
-	(void) benchmark_finirun();
 	(void) barrier_destroy(b);
-	(void) benchmark_fini();
 
-	if (lm_optE) {
-		(void) fprintf(stderr, " for %12.5f seconds\n",
-		    (double)(getnsecs() - startnsecs) /
-		    1.e9);
-		(void) fflush(stderr);
-	}
 	return (0);
 }
 
 void *
 worker_thread(void *arg)
 {
-	result_t		r;
-	long long 		last_sleep = 0;
-	long long		t;
+	result_t	r;
+	long long	last_sleep = 0;
+	long long	t;
 
-	r.re_errors = benchmark_initworker(arg);
+	LM_CHK(benchmark_initworker(arg) == 0);
 
 	while (lm_barrier->ba_flag) {
 		r.re_count = 0;
-		r.re_errors += benchmark_initbatch(arg);
+		LM_CHK(benchmark_initbatch(arg) == 0);
 
 		/* Sync to clock. */
 		if (lm_optA && ((t = getnsecs()) - last_sleep) > 75000000LL) {
@@ -430,7 +434,7 @@ worker_thread(void *arg)
 
 		/* Run benchmark. */
 		r.re_t0 = getnsecs();
-		(void) benchmark(arg, &r);
+		LM_CHK(benchmark(arg, &r) == 0);
 		r.re_t1 = getnsecs();
 
 		/* Time to stop? */
@@ -441,11 +445,10 @@ worker_thread(void *arg)
 
 		/* Record results and sync. */
 		(void) barrier_queue(lm_barrier, &r);
-		(void) benchmark_finibatch(arg);
-		r.re_errors = 0;
+		LM_CHK(benchmark_finibatch(arg) == 0);
 	}
 
-	(void) benchmark_finiworker(arg);
+	LM_CHK(benchmark_finiworker(arg) == 0);
 
 	return (0);
 }
@@ -520,12 +523,6 @@ print_warnings(barrier_t *b)
 	/*
 	 * XXX should warn on median != mean by a lot
 	 */
-	if (b->ba_errors) {
-		if (!head++) {
-			(void) printf("#\n# WARNINGS\n");
-		}
-		(void) printf("#     Errors occured during benchmark.\n");
-	}
 }
 
 void
@@ -602,7 +599,6 @@ update_stats(barrier_t *b, result_t *r)
 		b->ba_t0 = r->re_t0;
 		b->ba_t1 = r->re_t1;
 		b->ba_count0 = 0;
-		b->ba_errors0 = 0;
 	} else {
 		/* All but first thread */
 		if (r->re_t0 < b->ba_t0) {
@@ -614,7 +610,6 @@ update_stats(barrier_t *b, result_t *r)
 	}
 
 	b->ba_count0  += r->re_count;
-	b->ba_errors0 += r->re_errors;
 
 	if (b->ba_waiters == b->ba_hwm - 1) {
 		/* Last thread only. */
@@ -631,7 +626,6 @@ update_stats(barrier_t *b, result_t *r)
 		    (double)(lm_optT * lm_optP);
 
 		b->ba_count  += b->ba_count0;
-		b->ba_errors += b->ba_errors0;
 
 		b->ba_data[b->ba_batches % b->ba_datasize] =
 		    nsecs_per_call;
@@ -679,7 +673,6 @@ barrier_create(int hwm, int datasize)
 	b->ba_phase = 0;
 
 	b->ba_count = 0;
-	b->ba_errors = 0;
 
 	return (b);
 }
@@ -812,7 +805,6 @@ barrier_create(int hwm, int datasize)
 	b->ba_phase = 0;
 
 	b->ba_count = 0;
-	b->ba_errors = 0;
 
 	return (b);
 }
@@ -1488,4 +1480,31 @@ remove_outliers(double *data, int count, stats_t *stats)
 			data[j++] = data[i];
 
 	return (outliers);
+}
+
+/*
+ * Indicate a benchmark failure has occurred. When an error occurs the
+ * benchmark is most likely in a bad state and all bets are off:
+ * report the where and why of the error and exit the process.
+ *
+ * You almost always want to use the LM_CHK macro instead of calling
+ * this function directly.
+ *
+ */
+void
+lm_err(char *name, int errnum, char *file, int line)
+{
+	/* Log where and why benchmark failed. */
+	printf("%s ERROR %d %s %s:%d\n",
+	    name, errnum, strerror(errnum), file, line);
+	fflush(stdout);
+
+	/* If reporting status to stderr (-E) then indicate
+	 * failure. */
+	if (lm_optE) {
+		fprintf(stderr, " FAIL\n");
+		fflush(stderr);
+	}
+
+	exit(1);
 }

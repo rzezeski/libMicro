@@ -10,6 +10,7 @@
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2004 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -105,23 +106,15 @@ int
 benchmark_initworker(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
+	int			fd;
 
-	int fd;
+	LM_CHK((fd = open(optf, O_RDWR)) != -1);
+	LM_CHK(ftruncate(fd, optl) == 0);
 
-	if ((fd = open(optf, O_RDWR)) < 0) {
-		perror("open:");
-		return (1);
-	}
+	ts->ts_map = (char *)mmap(NULL, optl, PROT_READ | PROT_WRITE,
+	    opts ? MAP_SHARED : MAP_PRIVATE, fd, 0L);
 
-	(void) ftruncate(fd, optl);
-
-	if ((ts->ts_map = (char *)mmap(NULL, optl,
-	    PROT_READ | PROT_WRITE, opts ? MAP_SHARED : MAP_PRIVATE,
-	    fd, 0L)) == MAP_FAILED) {
-		perror("mmap:");
-		(void) close(fd);
-		return (1);
-	}
+	LM_CHK(ts->ts_map != MAP_FAILED);
 
 	return (0);
 }
@@ -133,12 +126,7 @@ benchmark(void *tsd, result_t *res)
 	int			i, j;
 
 	for (i = 0; i < lm_optB; i++) {
-
-		if (msync(ts->ts_map, optl, opta | opti) < 0) {
-			perror("msync:");
-			res->re_errors++;
-			break;
-		}
+		LM_CHK(msync(ts->ts_map, optl, opta | opti) == 0);
 
 		if (optr) {
 			for (j = 0; j < optl; j += pagesize) {

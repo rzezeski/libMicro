@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -122,9 +109,7 @@ benchmark_initrun()
 	    PROT_READ | PROT_WRITE,
 	    MAP_ANON | MAP_SHARED,
 	    -1, 0L);
-	if (mxs == MAP_FAILED) {
-		return (1);
-	}
+	LM_CHK(mxs != MAP_FAILED);
 
 	/*LINTED*/
 	cvs = (pthread_cond_t *)mmap(NULL,
@@ -132,9 +117,7 @@ benchmark_initrun()
 	    PROT_READ | PROT_WRITE,
 	    MAP_ANON | MAP_SHARED,
 	    -1, 0L);
-	if (cvs == MAP_FAILED) {
-		return (1);
-	}
+	LM_CHK(cvs != MAP_FAILED);
 
 	/*LINTED*/
 	conds = (int *)mmap(NULL,
@@ -142,12 +125,11 @@ benchmark_initrun()
 	    PROT_READ | PROT_WRITE,
 	    MAP_ANON | MAP_SHARED,
 	    -1, 0L);
-	if (conds == MAP_FAILED) {
-		return (1);
-	}
+	LM_CHK(conds != MAP_FAILED);
 
 	(void) pthread_mutexattr_init(&ma);
 	(void) pthread_condattr_init(&ca);
+
 	if (lm_optP > 1 || opts) {
 		(void) pthread_mutexattr_setpshared(&ma,
 		    PTHREAD_PROCESS_SHARED);
@@ -169,32 +151,29 @@ benchmark_initrun()
 	return (e);
 }
 
-int
+void
 block(int index)
 {
-	(void) pthread_mutex_lock(&mxs[index]);
+	LM_CHK(pthread_mutex_lock(&mxs[index]) == 0);
 	while (conds[index] != 0) {
 		(void) pthread_cond_wait(&cvs[index], &mxs[index]);
 	}
 	conds[index] = 1;
-	(void) pthread_mutex_unlock(&mxs[index]);
-
-	return (0);
+	LM_CHK(pthread_mutex_unlock(&mxs[index]) == 0);
 }
 
-int
+void
 unblock(int index)
 {
-	(void) pthread_mutex_lock(&mxs[index]);
+	LM_CHK(pthread_mutex_lock(&mxs[index]) == 0);
 	conds[index] = 0;
 	if (opto) {
-		(void) pthread_mutex_unlock(&mxs[index]);
+		LM_CHK(pthread_mutex_unlock(&mxs[index]) == 0);
 		(void) pthread_cond_signal(&cvs[index]);
 	} else {
 		(void) pthread_cond_signal(&cvs[index]);
-		(void) pthread_mutex_unlock(&mxs[index]);
+		LM_CHK(pthread_mutex_unlock(&mxs[index]) == 0);
 	}
-	return (0);
 }
 
 /*
@@ -205,7 +184,6 @@ int
 benchmark_initbatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			e = 0;
 
 	if (ts->ts_once == 0) {
 		int		us, them;
@@ -215,15 +193,15 @@ benchmark_initbatch(void *tsd)
 
 		ts->ts_id = us;
 
-		/* lock index asignment for us and them */
+		/* Lock index asignment for us and them. */
 		ts->ts_us0 = (us * 2);
 		ts->ts_us1 = (us * 2) + 1;
 		if (us < nthreads - 1) {
-			/* straight-thru connection to them */
+			/* Straight-thru connection to them. */
 			ts->ts_them0 = (them * 2);
 			ts->ts_them1 = (them * 2) + 1;
 		} else {
-			/* cross-over connection to them */
+			/* Cross-over connection to them. */
 			ts->ts_them0 = (them * 2) + 1;
 			ts->ts_them1 = (them * 2);
 		}
@@ -231,10 +209,10 @@ benchmark_initbatch(void *tsd)
 		ts->ts_once = 1;
 	}
 
-	/* block their first move */
-	e += block(ts->ts_them0);
+	/* Block their first move. */
+	block(ts->ts_them0);
 
-	return (e);
+	return (0);
 }
 
 int
@@ -242,37 +220,35 @@ benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
-	int			e = 0;
 
-	/* wait to be unblocked (id == 0 will not block) */
-	e += block(ts->ts_us0);
+	/* Wait to be unblocked (id == 0 will not block). */
+	block(ts->ts_us0);
 
 	for (i = 0; i < lm_optB; i += 2) {
-		/* allow them to block us again */
-		e += unblock(ts->ts_us0);
+		/* Allow them to block us again. */
+		unblock(ts->ts_us0);
 
-		/* block their next + 1 move */
-		e += block(ts->ts_them1);
+		/* Block their next + 1 move. */
+		block(ts->ts_them1);
 
-		/* unblock their next move */
-		e += unblock(ts->ts_them0);
+		/* Unblock their next move. */
+		unblock(ts->ts_them0);
 
-		/* wait for them to unblock us */
-		e += block(ts->ts_us1);
+		/* Wait for them to unblock us. */
+		block(ts->ts_us1);
 
-		/* repeat with locks reversed */
-		e += unblock(ts->ts_us1);
-		e += block(ts->ts_them0);
-		e += unblock(ts->ts_them1);
-		e += block(ts->ts_us0);
+		/* Repeat with locks reversed. */
+		unblock(ts->ts_us1);
+		block(ts->ts_them0);
+		unblock(ts->ts_them1);
+		block(ts->ts_us0);
 	}
 
-	/* finish batch with nothing blocked */
-	e += unblock(ts->ts_them0);
-	e += unblock(ts->ts_us0);
+	/* Finish batch with nothing blocked. */
+	unblock(ts->ts_them0);
+	unblock(ts->ts_us0);
 
 	res->re_count = i;
-	res->re_errors = e;
 
 	return (0);
 }

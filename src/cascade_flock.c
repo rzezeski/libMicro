@@ -10,6 +10,7 @@
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -98,42 +99,35 @@ int
 benchmark_initrun()
 {
 	int			i;
-	int			errors = 0;
 	char			fname[1024];
 
 	nthreads = lm_optP * lm_optT;
 	nfiles = nthreads * 2;
 	(void) setfdlimit(nfiles + 10);
 	files = (int *)malloc(nfiles * sizeof (int));
-	if (files == NULL) {
-		return (1);
-	}
+	LM_CHK(files != NULL);
 
 	(void) sprintf(fname, "%s/cascade.%d", optd, getpid());
 
 	for (i = 0; i < nfiles; i++) {
 		files[i] = open(fname, O_CREAT | O_TRUNC | O_RDWR, 0600);
-		if (files[i] == -1) {
-			errors++;
-		}
-		if (unlink(fname)) {
-			errors++;
-		}
+		LM_CHK(files[i] != -1);
+		LM_CHK(unlink(fname) == 0);
 	}
 
-	return (errors);
+	return (0);
 }
 
-int
+void
 block(int index)
 {
-	return (flock(files[index], LOCK_EX) == -1);
+	LM_CHK(flock(files[index], LOCK_EX) == 0);
 }
 
-int
+void
 unblock(int index)
 {
-	return (flock(files[index], LOCK_UN) == -1);
+	LM_CHK(flock(files[index], LOCK_UN) == 0);
 }
 
 /*
@@ -144,7 +138,6 @@ int
 benchmark_initbatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			e = 0;
 
 	if (ts->ts_once == 0) {
 		int		us, them;
@@ -171,9 +164,9 @@ benchmark_initbatch(void *tsd)
 	}
 
 	/* block their first move */
-	e += block(ts->ts_them0);
+	block(ts->ts_them0);
 
-	return (e);
+	return (0);
 }
 
 int
@@ -181,37 +174,35 @@ benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
-	int			e = 0;
 
 	/* wait to be unblocked (id == 0 will not block) */
-	e += block(ts->ts_us0);
+	block(ts->ts_us0);
 
 	for (i = 0; i < lm_optB; i += 2) {
 		/* allow them to block us again */
-		e += unblock(ts->ts_us0);
+		unblock(ts->ts_us0);
 
 		/* block their next + 1 move */
-		e += block(ts->ts_them1);
+		block(ts->ts_them1);
 
 		/* unblock their next move */
-		e += unblock(ts->ts_them0);
+		unblock(ts->ts_them0);
 
 		/* wait for them to unblock us */
-		e += block(ts->ts_us1);
+		block(ts->ts_us1);
 
 		/* repeat with locks reversed */
-		e += unblock(ts->ts_us1);
-		e += block(ts->ts_them0);
-		e += unblock(ts->ts_them1);
-		e += block(ts->ts_us0);
+		unblock(ts->ts_us1);
+		block(ts->ts_them0);
+		unblock(ts->ts_them1);
+		block(ts->ts_us0);
 	}
 
 	/* finish batch with nothing blocked */
-	e += unblock(ts->ts_them0);
-	e += unblock(ts->ts_us0);
+	unblock(ts->ts_them0);
+	unblock(ts->ts_us0);
 
 	res->re_count = i;
-	res->re_errors = e;
 
 	return (0);
 }

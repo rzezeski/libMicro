@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -106,23 +93,23 @@ benchmark_initbatch(void *tsd)
 	int			i;
 
 	if (ts->ts_buf == NULL) {
-		ts->ts_buf = malloc(opts);
-		ts->ts_fd = open(optf, O_WRONLY);
+		LM_CHK((ts->ts_buf = malloc(opts)) != NULL);
+		LM_CHK((ts->ts_fd = open(optf, O_WRONLY)) != -1);
 
 #ifdef __sun
-		if (optd)
-			(void) directio(ts->ts_fd, DIRECTIO_ON);
+		if (optd) {
+			LM_CHK(directio(ts->ts_fd, DIRECTIO_ON) == 0);
+		}
 #endif
 		/*
-		 * bring buf into cache if specified.
+		 * Bring buf into cache if specified.
 		 */
-
 		if (optc)
 			for (i = 0; i < opts; i++)
 				ts->ts_buf[i] = 0;
 	}
 
-	(void) lseek(ts->ts_fd, 0, SEEK_SET);
+	LM_CHK(lseek(ts->ts_fd, 0, SEEK_SET) == 0);
 
 	return (0);
 }
@@ -134,9 +121,7 @@ benchmark(void *tsd, result_t *res)
 	int			i;
 
 	for (i = 0; i < lm_optB; i++) {
-		if (write(ts->ts_fd, ts->ts_buf, opts) != opts) {
-			res->re_errors++;
-		}
+		LM_CHK(write(ts->ts_fd, ts->ts_buf, opts) == opts);
 	}
 	res->re_count = i;
 

@@ -10,6 +10,7 @@
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -17,7 +18,6 @@
 /*
  * malloc benchmark (crude)
  */
-
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -80,10 +80,7 @@ benchmark_initworker(void *tsd)
 	if (optscnt == 0)
 		optscnt = 1;
 
-	ts->ts_glob = malloc(sizeof (void *)* optg);
-	if (ts->ts_glob == NULL) {
-		return (1);
-	}
+	LM_CHK((ts->ts_glob = malloc(sizeof (void *)* optg)) != NULL);
 	return (0);
 }
 
@@ -95,8 +92,7 @@ benchmark(void *tsd, result_t *res)
 
 	for (i = 0; i < lm_optB; i++) {
 		for (k = j = 0; j < optg; j++) {
-			if ((ts->ts_glob[j] = malloc(opts[k++])) == NULL)
-				res->re_errors++;
+			LM_CHK((ts->ts_glob[j] = malloc(opts[k++])) != NULL);
 			if (k >= optscnt)
 				k = 0;
 		}

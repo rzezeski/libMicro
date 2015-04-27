@@ -18,6 +18,7 @@
 #ifndef LIBMICRO_H
 #define	LIBMICRO_H
 
+#include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
 
@@ -27,7 +28,6 @@
 
 typedef struct {
 	long long		re_count;
-	long long		re_errors;
 	long long		re_t0;
 	long long		re_t1;
 } result_t;
@@ -41,9 +41,8 @@ typedef struct {
 #define	DATASIZE		100000
 
 /*
- * stats we compute on data sets
+ * Stats computed per benchmark.
  */
-
 typedef struct stats {
 	double	st_min;
 	double	st_max;
@@ -58,9 +57,8 @@ typedef struct stats {
 } stats_t;
 
 /*
- * Barrier stuff
+ * Barrier stuff.
  */
-
 typedef struct {
 	int			ba_hwm;		/* barrier setpoint	*/
 	int			ba_flag;	/* benchmark while true	*/
@@ -76,7 +74,6 @@ typedef struct {
 #endif
 
 	long long		ba_count;	/* how many ops		 */
-	long long		ba_errors;	/* how many errors	 */
 
 	int			ba_quant;	/* how many quant errors */
 	int			ba_batches;	/* how many samples	 */
@@ -104,7 +101,6 @@ typedef struct {
 	long long		ba_t0;		/* first thread/proc */
 	long long		ba_t1;		/* time of last thread */
 	long long		ba_count0;
-	long long		ba_errors0;
 
 	int			ba_datasize;	/* possible #items data	*/
 	double			ba_data[1];	/* start of data ararry	*/
@@ -112,18 +108,17 @@ typedef struct {
 
 
 /*
- * Barrier interfaces
+ * Barrier interfaces.
  */
-
 barrier_t *barrier_create(int hwm, int datasize);
 int barrier_destroy(barrier_t *bar);
 int barrier_queue(barrier_t *bar, result_t *res);
 
 
 /*
- * Functions that can be provided by the user
+ * Callbacks implemented by the benchmark module. Any callback not
+ * defined by a module will fallback to a default nop behavior.
  */
-
 int	benchmark(void *tsd, result_t *res);
 int	benchmark_init();
 int	benchmark_fini();
@@ -138,9 +133,8 @@ char	*benchmark_result();
 
 
 /*
- * Globals exported to the user
+ * Variables visible to the benchmark modules.
  */
-
 extern int			lm_argc;
 extern char			**lm_argv;
 
@@ -170,9 +164,8 @@ extern size_t			lm_tsdsize;
 
 
 /*
- * Utility functions
+ * Utility functions.
  */
-
 int 		getpindex();
 int 		gettindex();
 void 		*gettsd(int p, int t);
@@ -183,5 +176,28 @@ long long 	sizetoll();
 int 		sizetoint();
 int		fit_line(double *, double *, int, double *, double *);
 long long	get_nsecs_resolution();
+void		lm_err();
+
+/*
+ * Like an assert() but for benchmark errors (instead of checking for
+ * impossible behavior). Use anywhere an error may occur, especially
+ * functions that dole out system resources (open(2)), or can fail for
+ * a varity of reasons (write(2)).
+ *
+ * This cannot be used in the benchmark_init() callback as the name
+ * (lm_optN) is not yet set.
+ *
+ * Example 1:
+ *
+ *     fd = open("/path/to/file", O_RDWR);
+ *     LM_CHK(fd != -1);
+ *
+ * Example 2:
+ *
+ *     int p[2];
+ *     LM_CHK(pipe(p) != -1);
+ */
+#define	LM_CHK(exp)							\
+	if (exp) {} else lm_err(lm_optN, errno, __FILE__, __LINE__)
 
 #endif /* LIBMICRO_H */

@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -79,23 +66,19 @@ int
 benchmark_initworker(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int errors = 0;
 
-	ts->ts_threads = calloc(lm_optB, sizeof (pthread_t));
-	(void) pthread_mutex_init(&ts->ts_lock, NULL);
+	LM_CHK((ts->ts_threads = calloc(lm_optB, sizeof (pthread_t))) != NULL);
+	LM_CHK(pthread_mutex_init(&ts->ts_lock, NULL) == 0);
 
 	if (opts) {
 		ts->ts_attr = malloc(sizeof (pthread_attr_t));
-		(void) pthread_attr_init(ts->ts_attr);
-		if ((errors = pthread_attr_setstacksize(ts->ts_attr, opts))
-		    != 0) {
-			errno = errors;
-			perror("pthread_attr_setstacksize");
-		}
-	} else
+		LM_CHK(pthread_attr_init(ts->ts_attr) == 0);
+		LM_CHK(pthread_attr_setstacksize(ts->ts_attr, opts) == 0);
+	} else {
 		ts->ts_attr = NULL;
+	}
 
-	return (errors?1:0);
+	return (0);
 }
 
 int
@@ -103,7 +86,7 @@ benchmark_initbatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	(void) pthread_mutex_lock(&ts->ts_lock);
+	LM_CHK(pthread_mutex_lock(&ts->ts_lock) == 0);
 
 	return (0);
 }
@@ -125,20 +108,13 @@ benchmark(void *tsd, result_t *res)
 {
 	int			i;
 	tsd_t			*ts = (tsd_t *)tsd;
-	int error;
 
 	for (i = 0; i < lm_optB; i++) {
-		if ((error = pthread_create(ts->ts_threads + i,
-		    ts->ts_attr, func, tsd)) != 0) {
-			errno = error;
-			perror("pthread_create");
-			ts->ts_threads[i] = 0;
-			res->re_errors++;
-			return (0);
-		}
+		LM_CHK(pthread_create(ts->ts_threads + i,
+			ts->ts_attr, func, tsd) == 0);
 	}
-	res->re_count = lm_optB;
 
+	res->re_count = lm_optB;
 	return (0);
 }
 
@@ -147,14 +123,11 @@ benchmark_finibatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int i;
-	int errors = 0;
 
-	(void) pthread_mutex_unlock(&ts->ts_lock);
+        LM_CHK(pthread_mutex_unlock(&ts->ts_lock) == 0);
 
-	for (i = 0; i < lm_optB; i++)
-		if (ts->ts_threads[i] == 0 ||
-		    pthread_join(ts->ts_threads[i], NULL) < 0) {
-			errors++;
-		}
-	return (errors);
+	for (i = 0; i < lm_optB; i++) {
+		LM_CHK(pthread_join(ts->ts_threads[i], NULL) == 0);
+	}
+	return (0);
 }

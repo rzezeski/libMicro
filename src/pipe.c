@@ -10,6 +10,7 @@
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -172,10 +173,8 @@ benchmark_initbatch(void *tsd)
 
 	switch (optm) {
 	case MD_MULTITHREAD:
-		result = pthread_create(&ts->ts_thread, NULL, loopback, tsd);
-		if (result == -1) {
-			return (1);
-		}
+		LM_CHK(pthread_create(&ts->ts_thread,
+			NULL, loopback, tsd) != -1);
 		break;
 	case MD_MULTIPROCESS:
 		pid = fork();
@@ -197,12 +196,8 @@ benchmark_initbatch(void *tsd)
 	}
 
 	/* Prime the loopback */
-	if (write(ts->ts_out, wbuf, opts) != opts) {
-		return (1);
-	}
-	if (readall(ts->ts_in, rbuf, opts) != opts) {
-		return (1);
-	}
+	LM_CHK(write(ts->ts_out, wbuf, opts) == opts);
+	LM_CHK(readall(ts->ts_in, rbuf, opts) == opts);
 
 	return (0);
 }
@@ -212,19 +207,10 @@ benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
-	int			n;
 
 	for (i = 0; i < lm_optB; i++) {
-		if (write(ts->ts_out, wbuf, opts) != opts) {
-			res->re_errors++;
-			continue;
-		}
-
-		n = readall(ts->ts_in, rbuf, opts);
-		if (n == -1) {
-			res->re_errors++;
-			continue;
-		}
+		LM_CHK(write(ts->ts_out, wbuf, opts) == opts);
+		LM_CHK(readall(ts->ts_in, rbuf, opts) != -1);
 	}
 	res->re_count = i;
 
@@ -237,27 +223,27 @@ benchmark_finibatch(void *tsd)
 	tsd_t			*ts = (tsd_t *)tsd;
 
 	/* Terminate the loopback */
-	(void) write(ts->ts_out, wbuf, opts);
-	(void) readall(ts->ts_in, rbuf, opts);
+	LM_CHK(write(ts->ts_out, wbuf, opts) == opts);
+	LM_CHK(readall(ts->ts_in, rbuf, opts) != -1);
 
 	switch (optm) {
 	case MD_MULTITHREAD:
-		(void) close(ts->ts_in2);
-		(void) close(ts->ts_out2);
-		(void) pthread_join(ts->ts_thread, NULL);
+		LM_CHK(close(ts->ts_in2) == 0);
+		LM_CHK(close(ts->ts_out2) == 0);
+		LM_CHK(pthread_join(ts->ts_thread, NULL) == 0);
 		break;
 	case MD_MULTIPROCESS:
-		(void) close(ts->ts_in2);
-		(void) close(ts->ts_out2);
-		(void) waitpid(ts->ts_child, NULL, 0);
+		LM_CHK(close(ts->ts_in2) == 0);
+		LM_CHK(close(ts->ts_out2) == 0);
+		LM_CHK(waitpid(ts->ts_child, NULL, 0) != -1);
 		break;
 	case MD_SINGLE:
 	default:
 		break;
 	}
 
-	(void) close(ts->ts_in);
-	(void) close(ts->ts_out);
+	LM_CHK(close(ts->ts_in) == 0);
+        LM_CHK(close(ts->ts_out) == 0);
 
 	if (optx == XP_FIFOS) {
 		(void) cleanup_fifos(ts);
@@ -285,13 +271,12 @@ readall(int s, void *buf, size_t len)
 
 	for (;;) {
 		n = read(s, (void *)((long)buf + total), len - total);
-		if (n < 1) {
-			return (-1);
-		}
+		LM_CHK(n >= 1);
 		total += n;
-		if (total >= len) {
+		if (total == len) {
 			return (total);
 		}
+		LM_CHK(total < len);
 	}
 }
 
@@ -299,19 +284,14 @@ void *
 loopback(void *arg)
 {
 	tsd_t			*ts = (tsd_t *)arg;
-	int			i, n, m;
+	int			i, m;
 
 	/* Include priming and termination */
 	m = lm_optB + 2;
 
 	for (i = 0; i < m; i++) {
-		n = readall(ts->ts_in2, rbuf, opts);
-		if (n == -1) {
-			break;
-		}
-		if (write(ts->ts_out2, wbuf, opts) != opts) {
-			break;
-		}
+		LM_CHK(readall(ts->ts_in2, rbuf, opts) == opts);
+		LM_CHK(write(ts->ts_out2, wbuf, opts) == opts);
 	}
 
 	return (NULL);
@@ -320,25 +300,17 @@ loopback(void *arg)
 int
 prepare_localtcp_once(tsd_t *ts)
 {
-	int			j;
+	int			j = FIRSTPORT;
 	int			opt = 1;
 	struct hostent	*host;
 
-	j = FIRSTPORT;
-
 	ts->ts_lsn = socket(AF_INET, SOCK_STREAM, 0);
-	if (ts->ts_lsn == -1) {
-		return (-1);
-	}
+	LM_CHK(ts->ts_lsn != -1);
 
-	if (setsockopt(ts->ts_lsn, SOL_SOCKET, SO_REUSEADDR,
-	    &opt, sizeof (int)) == -1) {
-		return (-1);
-	}
+	LM_CHK((setsockopt(ts->ts_lsn, SOL_SOCKET, SO_REUSEADDR,
+		    &opt, sizeof (int))) != -1);
 
-	if ((host = gethostbyname("localhost")) == NULL) {
-		return (-1);
-	}
+	LM_CHK((host = gethostbyname("localhost")) != NULL);
 
 	for (;;) {
 		(void) memset(&ts->ts_add, 0,
@@ -354,15 +326,10 @@ prepare_localtcp_once(tsd_t *ts)
 			break;
 		}
 
-		if (errno != EADDRINUSE) {
-			return (-1);
-		}
+		LM_CHK(errno == EADDRINUSE);
 	}
 
-	if (listen(ts->ts_lsn, 5) == -1) {
-		return (-1);
-	}
-
+	LM_CHK(listen(ts->ts_lsn, 5) != -1);
 	return (0);
 }
 
@@ -375,46 +342,28 @@ prepare_localtcp(tsd_t *ts)
 	socklen_t		size;
 
 	if (ts->ts_once++ == 0) {
-		if (prepare_localtcp_once(ts) == -1) {
-			return (-1);
-		}
+		LM_CHK(prepare_localtcp_once(ts) != -1);
 	}
 
 	ts->ts_out = socket(AF_INET, SOCK_STREAM, 0);
-	if (ts->ts_out == -1) {
-		return (-1);
-	}
-
-	if (fcntl(ts->ts_out, F_SETFL, O_NDELAY) == -1) {
-		return (-1);
-	}
+	LM_CHK(ts->ts_out != -1);
+	LM_CHK(fcntl(ts->ts_out, F_SETFL, O_NDELAY) != -1);
 
 	result = connect(ts->ts_out, (struct sockaddr *)&ts->ts_add,
 	    sizeof (struct sockaddr_in));
-	if ((result == -1) && (errno != EINPROGRESS)) {
-		return (-1);
-	}
 
-	if (fcntl(ts->ts_out, F_SETFL, 0) == -1) {
-		return (-1);
-	}
+	LM_CHK((result == -1) && (errno == EINPROGRESS));
+	LM_CHK(fcntl(ts->ts_out, F_SETFL, 0) != -1);
 
 	size = sizeof (struct sockaddr);
 	result = accept(ts->ts_lsn, (struct sockaddr *)&addr, &size);
-	if (result == -1) {
-		return (-1);
-	}
+	LM_CHK(result != -1);
 	ts->ts_out2 = result;
 
-	if (setsockopt(ts->ts_out, IPPROTO_TCP, TCP_NODELAY,
-	    &opt, sizeof (int)) == -1) {
-		return (-1);
-	}
-
-	if (setsockopt(ts->ts_out2, IPPROTO_TCP, TCP_NODELAY,
-	    &opt, sizeof (int)) == -1) {
-		return (-1);
-	}
+	LM_CHK(setsockopt(ts->ts_out, IPPROTO_TCP, TCP_NODELAY,
+		&opt, sizeof (int)) != -1);
+	LM_CHK(setsockopt(ts->ts_out2, IPPROTO_TCP, TCP_NODELAY,
+		&opt, sizeof (int)) != -1);
 
 	if (optm == MD_SINGLE) {
 		ts->ts_in = ts->ts_out2;
@@ -431,9 +380,7 @@ prepare_socketpair(tsd_t *ts)
 {
 	int			s[2];
 
-	if (socketpair(PF_UNIX, SOCK_STREAM, 0, s) == -1) {
-		return (-1);
-	}
+	LM_CHK(socketpair(PF_UNIX, SOCK_STREAM, 0, s) != -1);
 
 	if (optm == MD_SINGLE) {
 		ts->ts_in = s[0];
@@ -455,9 +402,8 @@ prepare_fifos(tsd_t *ts)
 
 	(void) sprintf(path, "/tmp/pipe_%d.%dA",
 	    getpid(), (int)pthread_self());
-	if (mknod(path, 0600, S_IFIFO) == -1) {
-		return (-1);
-	}
+
+	LM_CHK(mknod(path, 0600, S_IFIFO) != -1);
 
 	if (optm == MD_SINGLE) {
 		ts->ts_in = open(path, O_RDONLY);
@@ -468,9 +414,8 @@ prepare_fifos(tsd_t *ts)
 
 		(void) sprintf(path, "/tmp/pipe_%d.%dB",
 		    getpid(), (int)pthread_self());
-		if (mknod(path, 0600, S_IFIFO) == -1) {
-			return (-1);
-		}
+
+		LM_CHK(mknod(path, 0600, S_IFIFO) != -1);
 
 		ts->ts_in2 = open(path, O_RDONLY);
 		ts->ts_out = open(path, O_WRONLY);
@@ -486,9 +431,9 @@ cleanup_fifos(tsd_t *ts)
 	char			path[64];
 
 	(void) sprintf(path, "/tmp/pipe_%d.%dA", getpid(), (int)pthread_self());
-	(void) unlink(path);
+	LM_CHK(unlink(path) == 0);
 	(void) sprintf(path, "/tmp/pipe_%d.%dB", getpid(), (int)pthread_self());
-	(void) unlink(path);
+	LM_CHK(unlink(path) == 0);
 
 	return (0);
 }
@@ -499,22 +444,16 @@ prepare_pipes(tsd_t *ts)
 	int			p[2];
 
 	if (optm == MD_SINGLE) {
-		if (pipe(p) == -1) {
-			return (-1);
-		}
+		LM_CHK(pipe(p) != -1);
 		ts->ts_in = p[0];
 		ts->ts_out = p[1];
 
 	} else {
-		if (pipe(p) == -1) {
-			return (-1);
-		}
+		LM_CHK(pipe(p) != -1);
 		ts->ts_in = p[0];
 		ts->ts_out2 = p[1];
 
-		if (pipe(p) == -1) {
-			return (-1);
-		}
+		LM_CHK(pipe(p) != -1);
 		ts->ts_in2 = p[0];
 		ts->ts_out = p[1];
 	}

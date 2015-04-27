@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -63,12 +50,7 @@ benchmark_init()
 int
 benchmark_initrun()
 {
-	fd = socket(AF_INET, SOCK_STREAM, 0);
-	if (fd == -1) {
-		perror("socket");
-		exit(1);
-	}
-
+	LM_CHK((fd = socket(AF_INET, SOCK_STREAM, 0)) != -1);
 	return (0);
 }
 
@@ -80,19 +62,14 @@ benchmark(void *tsd, result_t *res)
 	int			flags;
 
 	for (i = 0; i < lm_optB; i += 4) {
-		if (fcntl(fd, F_GETFL, &flags) < 0)
-			res->re_errors++;
+		LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
+
 		flags |= O_NDELAY;
+		LM_CHK(fcntl(fd, F_SETFL, &flags) != -1);
+		LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
 
-		if (fcntl(fd, F_SETFL, &flags) < 0)
-			res->re_errors++;
-
-		if (fcntl(fd, F_GETFL, &flags) < 0)
-			res->re_errors++;
 		flags &= ~O_NDELAY;
-
-		if (fcntl(fd, F_SETFL, &flags) < 0)
-			res->re_errors++;
+		LM_CHK(fcntl(fd, F_SETFL, &flags) != -1);
 	}
 	res->re_count = i;
 

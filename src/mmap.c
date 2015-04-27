@@ -73,11 +73,7 @@ benchmark_init()
 /* 	} */
 /* #endif */
 
-	pagesizes = malloc(npagesizes * sizeof (size_t));
-	if (pagesizes == NULL) {
-		return (-1);
-	}
-
+	LM_CHK((pagesizes = malloc(npagesizes * sizeof (size_t))) != NULL);
 	pagesizes[0] = sysconf(_SC_PAGESIZE);
 
 	/*
@@ -111,7 +107,6 @@ benchmark_init()
 	    DEFF, def_optl, def_optp);
 
 	(void) sprintf(lm_header, "%8s %5s %8s", "length", "flags", "pgsz");
-
 
 	return (0);
 }
@@ -149,6 +144,7 @@ int
 benchmark_initrun()
 {
 	int i;
+
 	/*
 	 * If optp or optl were set by caller, make sure that they point to a
 	 * valid pagesize.  If not, return an error.
@@ -182,8 +178,9 @@ benchmark_initrun()
 		exit(1);
 	}
 
-	if (!anon)
-		fd = open(optf, O_RDWR);
+	if (!anon) {
+		LM_CHK((fd = open(optf, O_RDWR)) != -1);
+	}
 
 	return (0);
 }
@@ -192,16 +189,13 @@ int
 benchmark_initbatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			errors = 0;
 
 	if (ts->ts_once++ == 0) {
 		ts->ts_map = (vchar_t **)malloc(lm_optB * sizeof (void *));
-		if (ts->ts_map == NULL) {
-			errors++;
-		}
+		LM_CHK(ts->ts_map != NULL);
 	}
 
-	return (errors);
+	return (0);
 }
 
 int
@@ -238,10 +232,7 @@ benchmark(void *tsd, result_t *res)
 			    fd, 0L);
 		}
 
-		if (ts->ts_map[i] == MAP_FAILED) {
-			res->re_errors++;
-			continue;
-		}
+		LM_CHK(ts->ts_map[i] != MAP_FAILED);
 
 	/*
 	 * XXX disable for now because
@@ -281,8 +272,9 @@ benchmark_finibatch(void *tsd)
 	int			i;
 
 	for (i = 0; i < lm_optB; i++) {
-		(void) munmap((void *)ts->ts_map[i], optl);
+		LM_CHK(munmap((void *)ts->ts_map[i], optl) == 0);
 	}
+
 	return (0);
 }
 

@@ -1,33 +1,19 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
-
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -110,51 +96,28 @@ int
 benchmark_initbatch_once(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i, j;
+	int			i;
+	int			j = FIRSTPORT;
 
-	int			errors = 0;
-
-	ts->ts_lsns = (int *)malloc(lm_optB * sizeof (int));
-	if (ts->ts_lsns == NULL) {
-		errors ++;
-	}
-	ts->ts_accs = (int *)malloc(lm_optB * sizeof (int));
-	if (ts->ts_accs == NULL) {
-		errors ++;
-	}
-	ts->ts_cons = (int *)malloc(lm_optB * sizeof (int));
-	if (ts->ts_cons == NULL) {
-		errors ++;
-	}
+	LM_CHK((ts->ts_lsns = (int *)malloc(lm_optB * sizeof (int))) != NULL);
+	LM_CHK((ts->ts_accs = (int *)malloc(lm_optB * sizeof (int))) != NULL);
+	LM_CHK((ts->ts_cons = (int *)malloc(lm_optB * sizeof (int))) != NULL);
 	ts->ts_adds =
 	    (struct sockaddr_in *)malloc(lm_optB *
 	    sizeof (struct sockaddr_in));
-	if (ts->ts_accs == NULL) {
-		errors ++;
-	}
+	LM_CHK(ts->ts_accs != NULL);
 
-	j = FIRSTPORT;
 	for (i = 0; i < lm_optB; i++) {
 		ts->ts_lsns[i] = socket(AF_INET, SOCK_STREAM, 0);
-		if (ts->ts_lsns[i] == -1) {
-			perror("socket");
-			errors ++;
-		}
+		LM_CHK(ts->ts_lsns[i] != -1);
 
 		/*
 		 * make accept socket non-blocking so in case of errors
 		 * we don't hang
 		 */
 
-		if (fcntl(ts->ts_lsns[i], F_SETFL, O_NDELAY) == -1) {
-			perror("fcntl");
-			errors ++;
-		}
-
-
-		if ((host = gethostbyname("localhost")) == NULL) {
-			errors ++;
-		}
+	        LM_CHK(fcntl(ts->ts_lsns[i], F_SETFL, O_NDELAY) != -1);
+		LM_CHK((host = gethostbyname("localhost")) != NULL);
 
 		for (;;) {
 			(void) memset(&ts->ts_adds[i], 0,
@@ -170,17 +133,12 @@ benchmark_initbatch_once(void *tsd)
 				break;
 			}
 
-			if (errno != EADDRINUSE) {
-				errors ++;
-			}
+			LM_CHK(errno == EADDRINUSE);
 		}
 
-		if (listen(ts->ts_lsns[i], 5) == -1) {
-			perror("listen");
-			errors ++;
-		}
+		LM_CHK(listen(ts->ts_lsns[i], 5) == 0);
 	}
-	return (errors);
+	return (0);
 }
 
 int
@@ -188,47 +146,29 @@ benchmark_initbatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
-	int			errors = 0;
 	int			result;
 
 	if (ts->ts_once++ == 0) {
-		if (errors += benchmark_initbatch_once(tsd) == -1) {
-			return (-1);
-		}
+		LM_CHK(benchmark_initbatch_once(tsd) == 0);
 	}
-
 
 	for (i = 0; i < lm_optB; i++) {
 		ts->ts_cons[i] = socket(AF_INET, SOCK_STREAM, 0);
-		if (ts->ts_cons[i] == -1) {
-			perror("init:socket");
-			errors ++;
-		}
-
-		if (fcntl(ts->ts_cons[i], F_SETFL, O_NDELAY) == -1) {
-			perror("init:fcntl");
-			errors ++;
-		}
-
+		LM_CHK(ts->ts_cons[i] != -1);
+		LM_CHK(fcntl(ts->ts_cons[i], F_SETFL, O_NDELAY) != -1);
 		if (opta) {
 			result = connect(ts->ts_cons[i],
 			    (struct sockaddr *)&ts->ts_adds[i],
 			    sizeof (struct sockaddr_in));
-			if ((result == -1) && (errno != EINPROGRESS)) {
-				perror("init:connect");
-				errors ++;
-			}
+			LM_CHK((result == 0) || (errno == EINPROGRESS));
 		}
 	}
 
-	return (errors);
+	return (0);
 }
 
 int
 benchmark(void *tsd, result_t *res)
-
-
-
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
@@ -243,19 +183,14 @@ benchmark(void *tsd, result_t *res)
 			    (struct sockaddr *)&ts->ts_adds[i],
 			    sizeof (struct sockaddr_in));
 			if (result != 0 && errno != EISCONN) {
-				if (errno == EINPROGRESS) {
-					struct pollfd pollfd;
-					if (optc)
-						continue;
-					pollfd.fd = ts->ts_cons[i];
-					pollfd.events = POLLOUT;
-					if (poll(&pollfd, 1, -1) == 1)
-						goto again;
-				}
-
-				res->re_errors ++;
-				perror("benchmark:connect");
-				continue;
+				LM_CHK(errno == EINPROGRESS);
+				struct pollfd pollfd;
+				if (optc)
+					continue;
+				pollfd.fd = ts->ts_cons[i];
+				pollfd.events = POLLOUT;
+				if (poll(&pollfd, 1, -1) == 1)
+					goto again;
 			}
 		}
 
@@ -275,15 +210,10 @@ benchmark(void *tsd, result_t *res)
 			}
 
 			ts->ts_accs[i] = result;
-			if (result == -1) {
-				res->re_errors ++;
-				perror("benchmark:accept");
-				continue;
-			}
+			LM_CHK(result != -1);
 		}
 	}
 	res->re_count = i;
-
 	return (0);
 }
 
@@ -294,11 +224,10 @@ benchmark_finibatch(void *tsd)
 	int			i;
 
 	for (i = 0; i < lm_optB; i++) {
-
 		if (!optc) {
-			(void) close(ts->ts_accs[i]);
+			LM_CHK(close(ts->ts_accs[i]) == 0);
 		}
-		(void) close(ts->ts_cons[i]);
+		LM_CHK(close(ts->ts_cons[i]) == 0);
 	}
 
 	return (0);

@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -36,7 +23,6 @@
 #include <sys/sem.h>
 
 #include "libmicro.h"
-
 
 typedef struct {
 	int	ts_semid;
@@ -55,12 +41,9 @@ benchmark_init()
 int
 benchmark_initbatch(void *tsd)
 {
-
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	if ((ts->ts_semid = semget(IPC_PRIVATE, 2, 0600)) == -1) {
-		return (-1);
-	}
+	LM_CHK((ts->ts_semid = semget(IPC_PRIVATE, 2, 0600)) != -1);
 
 	return (0);
 }
@@ -68,9 +51,9 @@ benchmark_initbatch(void *tsd)
 int
 benchmark_finibatch(void *tsd)
 {
-	tsd_t 			*ts = (tsd_t *)tsd;
+	tsd_t			*ts = (tsd_t *)tsd;
 
-	(void) semctl(ts->ts_semid, 0, IPC_RMID);
+	LM_CHK(semctl(ts->ts_semid, 0, IPC_RMID) != -1);
 
 	return (0);
 }
@@ -86,15 +69,12 @@ benchmark(void *tsd, result_t *res)
 		s[0].sem_num = 0;
 		s[0].sem_op  = 1;
 		s[0].sem_flg = 0;
-		if (semop(ts->ts_semid, s, 1) == -1) {
-			res->re_errors++;
-		}
+		LM_CHK(semop(ts->ts_semid, s, 1) == 0);
+
 		s[0].sem_num = 0;
 		s[0].sem_op  = -1;
 		s[0].sem_flg = 0;
-		if (semop(ts->ts_semid, s, 1) == -1) {
-			res->re_errors++;
-		}
+		LM_CHK(semop(ts->ts_semid, s, 1) == 0);
 	}
 
 	res->re_count += lm_optB;

@@ -1,29 +1,16 @@
 /*
- * CDDL HEADER START
+ * This file and its contents are supplied under the terms of the
+ * Common Development and Distribution License ("CDDL"), version 1.0.
+ * You may only use this file in accordance with the terms of version
+ * 1.0 of the CDDL.
  *
- * The contents of this file are subject to the terms
- * of the Common Development and Distribution License
- * (the "License").  You may not use this file except
- * in compliance with the License.
- *
- * You can obtain a copy of the license at
- * src/OPENSOLARIS.LICENSE
- * or http://www.opensolaris.org/os/licensing.
- * See the License for the specific language governing
- * permissions and limitations under the License.
- *
- * When distributing Covered Code, include this CDDL
- * HEADER in each file and include the License file at
- * usr/src/OPENSOLARIS.LICENSE.  If applicable,
- * add the following below this CDDL HEADER, with the
- * fields enclosed by brackets "[]" replaced with your
- * own identifying information: Portions Copyright [yyyy]
- * [name of copyright owner]
- *
- * CDDL HEADER END
+ * A full copy of the text of the CDDL should have accompanied this
+ * source.  A copy of the CDDL is also available via the Internet at
+ * http://www.illumos.org/license/CDDL.
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -72,6 +59,7 @@ benchmark_optswitch(int opt, char *optarg)
 	default:
 		return (-1);
 	}
+
 	return (0);
 }
 
@@ -96,13 +84,10 @@ benchmark_initbatch(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
-	int			errors = 0;
 
 	if (ts->ts_once++ == 0) {
 		ts->ts_pids = (int *)malloc(lm_optB * sizeof (pid_t));
-		if (ts->ts_pids == NULL) {
-			errors ++;
-		}
+		LM_CHK(ts->ts_pids != NULL);
 	}
 
 	/*
@@ -110,7 +95,7 @@ benchmark_initbatch(void *tsd)
 	 */
 
 	for (i = 0; i < lm_optB; i++) {
-		ts->ts_pids[i] = fork();
+		LM_CHK((ts->ts_pids[i] = fork()) != -1);
 		switch (ts->ts_pids[i]) {
 		case 0:
 			(void) barrier_queue(b, NULL);
@@ -118,15 +103,12 @@ benchmark_initbatch(void *tsd)
 				_exit(0);
 			exit(0);
 			break;
-		case -1:
-			errors ++;
-			break;
 		default:
 			continue;
 		}
 	}
 
-	return (errors);
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -136,22 +118,15 @@ benchmark(void *tsd, result_t *res)
 	int			i;
 
 	/*
-	 * start them all exiting
+	 * Start them all exiting.
 	 */
-
 	(void) barrier_queue(b, NULL);
 
 	/*
-	 * wait for them all to exit
+	 * Wait for them all to exit.
 	 */
-
 	for (i = 0; i < lm_optB; i++) {
-		switch (waitpid((pid_t)-1, NULL, 0)) {
-		case 0:
-			continue;
-		case -1:
-			res->re_errors++;
-		}
+		LM_CHK(waitpid((pid_t)-1, NULL, 0) != -1);
 	}
 
 	res->re_count = i;

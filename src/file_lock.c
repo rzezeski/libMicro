@@ -10,6 +10,7 @@
  */
 
 /*
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
  * Use is subject to license terms.
  */
@@ -27,9 +28,9 @@
 
 #include "libmicro.h"
 
-static int 			file;
+static int			file;
 
-int
+void
 block(int index)
 {
 	struct flock		fl;
@@ -38,10 +39,10 @@ block(int index)
 	fl.l_whence = SEEK_SET;
 	fl.l_start = index;
 	fl.l_len = 1;
-	return (fcntl(file, F_SETLKW, &fl) == -1);
+	LM_CHK(fcntl(file, F_SETLKW, &fl) != -1);
 }
 
-int
+void
 unblock(int index)
 {
 	struct flock		fl;
@@ -50,28 +51,23 @@ unblock(int index)
 	fl.l_whence = SEEK_SET;
 	fl.l_start = index;
 	fl.l_len = 1;
-	return (fcntl(file, F_SETLK, &fl) == -1);
+	LM_CHK(fcntl(file, F_SETLK, &fl) != -1);
 }
+
 int
 benchmark_init()
 {
 	char			fname[80];
-	int	errors = 0;
 
 	(void) sprintf(fname, "/tmp/oneflock.%d", getpid());
 
 	file = open(fname, O_CREAT | O_TRUNC | O_RDWR, 0600);
 
-	if (file == -1) {
-		errors++;
-	}
-	if (unlink(fname)) {
-		errors++;
-	}
-
+	LM_CHK(file != -1);
+	LM_CHK(unlink(fname) == 0);
 	lm_tsdsize = 0;
 
-	return (errors);
+	return (0);
 }
 
 /*ARGSUSED*/
@@ -79,14 +75,12 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	int			i;
-	int			e = 0;
 
 	for (i = 0; i < lm_optB; i ++) {
-		e += block(0);
-		e += unblock(0);
+		block(0);
+		unblock(0);
 	}
 	res->re_count = i;
-	res->re_errors = e;
 
 	return (0);
 }
