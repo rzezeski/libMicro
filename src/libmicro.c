@@ -35,17 +35,11 @@
 #include <math.h>
 #include <limits.h>
 
-#ifdef	__sun
-#include <sys/elf.h>
-#endif
-
 #include "libmicro.h"
 
-
 /*
- * user visible globals
+ * Globals visible by benchmark modules.
  */
-
 int				lm_argc = 0;
 char **				lm_argv = NULL;
 
@@ -76,10 +70,9 @@ int				lm_defS = 0;
 int				lm_defT = 1;
 
 /*
- * default on fast platform, should be overridden by individual
+ * Defaults on fast platform, should be overridden by individual
  * benchmarks if significantly wrong in either direction.
  */
-
 int				lm_nsecs_per_op = 5;
 
 char				*lm_procpath;
@@ -89,11 +82,9 @@ char				lm_optstr[STRSIZE];
 char				lm_header[STRSIZE];
 size_t				lm_tsdsize = 0;
 
-
 /*
- *  Globals we do not export to the user
+ * Globals not visible to the benchmark modules.
  */
-
 static barrier_t		*lm_barrier;
 static pid_t			*pids = NULL;
 static pthread_t		*tids = NULL;
@@ -105,11 +96,6 @@ static size_t			tsdsize = 0;
 static long long		lm_hz = 0;
 #endif
 
-
-/*
- * Forward references
- */
-
 static void 		worker_process();
 static void 		usage();
 static void 		print_stats(barrier_t *);
@@ -120,11 +106,10 @@ static long long	nsecs_resolution;
 static long long	get_nsecs_overhead();
 static int		crunch_stats(double *, int, stats_t *);
 static void 		compute_stats(barrier_t *);
-/*
- * main routine; renamed in this file to allow linking with other
- * files
- */
 
+/*
+ * Main routine renamed to allow linking with other files
+ */
 int
 actual_main(int argc, char *argv[])
 {
@@ -149,17 +134,12 @@ actual_main(int argc, char *argv[])
 	lm_argc = argc;
 	lm_argv = argv;
 
-	/* before we do anything */
 	(void) benchmark_init();
-
 
 	nsecs_overhead = get_nsecs_overhead();
 	nsecs_resolution = get_nsecs_resolution();
 
-	/*
-	 * Set defaults
-	 */
-
+	/* Set defaults */
 	lm_opt1	= lm_def1;
 	lm_optB	= lm_defB;
 	lm_optD	= lm_defD;
@@ -171,11 +151,9 @@ actual_main(int argc, char *argv[])
 	lm_optT	= lm_defT;
 
 	/*
-	 * squirrel away the path to the current
-	 * binary in a way that works on both
-	 * Linux and Solaris
+	 * Squirrel away the path to the current binary in a way that
+	 * works on both Linux and Solaris.
 	 */
-
 	if (*argv[0] == '/') {
 		lm_procpath = strdup(argv[0]);
 		*strrchr(lm_procpath, '/') = 0;
@@ -188,10 +166,7 @@ actual_main(int argc, char *argv[])
 		lm_procpath = strdup(path);
 	}
 
-	/*
-	 * name of binary
-	 */
-
+	/* Name of binary. */
 	if ((tmp = strrchr(argv[0], '/')) == NULL)
 		(void) strcpy(lm_procname, argv[0]);
 	else
@@ -201,10 +176,7 @@ actual_main(int argc, char *argv[])
 		lm_optN = lm_procname;
 	}
 
-	/*
-	 * Parse command line arguments
-	 */
-
+	/* Parse command line arguments. */
 	(void) sprintf(optstr, "1AB:C:D:EHI:LMN:P:RST:VW?%s", lm_optstr);
 	while ((opt = getopt(argc, argv, optstr)) != -1) {
 		switch (opt) {
@@ -270,7 +242,7 @@ actual_main(int argc, char *argv[])
 		}
 	}
 
-	/* deal with implicit and overriding options */
+	/* Deal with implicit and overriding options. */
 	if (lm_opt1 && lm_optP > 1) {
 		lm_optP = 1;
 		(void) printf("warning: -1 overrides -P\n");
@@ -282,9 +254,10 @@ actual_main(int argc, char *argv[])
 	}
 
 	if (lm_optB == 0) {
+
 		/*
-		 * neither benchmark or user has specified the number
-		 * of cnts/sample, so use computed value
+		 * Neither benchmark or user has specified the number
+		 * of cnts/sample. Use computed value.
 		 */
 		if (lm_optI)
 			lm_nsecs_per_op = lm_optI;
@@ -294,15 +267,11 @@ actual_main(int argc, char *argv[])
 			lm_optB = 1;
 	}
 
-	/*
-	 * now that the options are set
-	 */
-
 	if (benchmark_initrun() == -1) {
 		exit(1);
 	}
 
-	/* allocate dynamic data */
+	/* Allocate dynamic data. */
 	pids = (pid_t *)malloc(lm_optP * sizeof (pid_t));
 	if (pids == NULL) {
 		perror("malloc(pids)");
@@ -314,17 +283,22 @@ actual_main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* check that the case defines lm_tsdsize before proceeding */
+	/*
+	 * Check that the case defines lm_tsdsize before proceeding.
+	 */
 	if (lm_tsdsize == (size_t)-1) {
 		(void) fprintf(stderr, "error in benchmark_init: "
 		    "lm_tsdsize not set\n");
 		exit(1);
 	}
 
-	/* round up tsdsize to nearest 128 to eliminate false sharing */
+	/*
+	 * Round up tsdsize to nearest 128 to eliminate false
+	 * sharing.
+	 */
 	tsdsize = ((lm_tsdsize + 127) / 128) * 128;
 
-	/* allocate sufficient TSD for each thread in each process */
+	/* Allocate sufficient TSD for each thread in each process. */
 	tsdseg = (void *)mmap(NULL, lm_optT * lm_optP * tsdsize + 8192,
 	    PROT_READ | PROT_WRITE, MAP_SHARED | MAP_ANON, -1, 0L);
 	if (tsdseg == NULL) {
@@ -332,7 +306,7 @@ actual_main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/* initialise worker synchronisation */
+	/* Initialise worker synchronisation. */
 	b = barrier_create(lm_optT * lm_optP, DATASIZE);
 	if (b == NULL) {
 		perror("barrier_create()");
@@ -341,22 +315,21 @@ actual_main(int argc, char *argv[])
 	lm_barrier = b;
 	b->ba_flag = 1;
 
-	/* need this here so that parent and children can call exit() */
+	/* Flush so that parent and children can call exit(). */
 	(void) fflush(stdout);
 	(void) fflush(stderr);
 
-	/* when we started and when to stop */
-
+	/* When we started and when to stop. */
 	b->ba_starttime = getnsecs();
 	b->ba_deadline = (long long) (b->ba_starttime + (lm_optD * 1000000LL));
 
-	/* do the work */
+	/* Do the work. */
 	if (lm_opt1) {
-		/* single process, non-fork mode */
+		/* Single process, non-fork mode. */
 		pindex = 0;
 		worker_process();
 	} else {
-		/* create worker processes */
+		/* Create worker processes. */
 		for (i = 0; i < lm_optP; i++) {
 			pids[i] = fork();
 
@@ -375,7 +348,7 @@ actual_main(int argc, char *argv[])
 			}
 		}
 
-		/* wait for worker processes */
+		/* Wait for worker processes. */
 		for (i = 0; i < lm_optP; i++) {
 			if (pids[i] > 0) {
 				(void) waitpid(pids[i], NULL, 0);
@@ -384,12 +357,9 @@ actual_main(int argc, char *argv[])
 	}
 
 	b->ba_endtime = getnsecs();
-
-	/* compute results */
-
 	compute_stats(b);
 
-	/* print arguments benchmark was invoked with ? */
+	/* Print benchmark arguments. */
 	if (lm_optL) {
 		int l;
 		(void) printf("# %s ", argv[0]);
@@ -399,7 +369,7 @@ actual_main(int argc, char *argv[])
 		(void) printf("\n");
 	}
 
-	/* print result header (unless suppressed) */
+	/* Print result header. */
 	if (!lm_optH) {
 		(void) printf("%12s %3s %3s %12s %12s %8s %8s %s\n",
 		    "", "prc", "thr",
@@ -407,8 +377,7 @@ actual_main(int argc, char *argv[])
 		    "samples", "errors", "cnt/samp", lm_header);
 	}
 
-	/* print result */
-
+	/* Print result. */
 	(void) printf("%-12s %3d %3d %12.5f %12d %8lld %8d %s\n",
 	    lm_optN, lm_optP, lm_optT,
 	    (lm_optM?b->ba_corrected.st_mean:b->ba_corrected.st_median),
@@ -419,11 +388,11 @@ actual_main(int argc, char *argv[])
 		print_stats(b);
 	}
 
-	/* just incase something goes awry */
+	/* Just incase something goes awry. */
 	(void) fflush(stdout);
 	(void) fflush(stderr);
 
-	/* cleanup by stages */
+	/* Cleanup. */
 	(void) benchmark_finirun();
 	(void) barrier_destroy(b);
 	(void) benchmark_fini();
@@ -450,31 +419,29 @@ worker_thread(void *arg)
 		r.re_count = 0;
 		r.re_errors += benchmark_initbatch(arg);
 
-		/* sync to clock */
-
+		/* Sync to clock. */
 		if (lm_optA && ((t = getnsecs()) - last_sleep) > 75000000LL) {
 			(void) poll(0, 0, 10);
 			last_sleep = t;
 		}
-		/* wait for it ... */
+
+		/* Wait for it. */
 		(void) barrier_queue(lm_barrier, NULL);
 
-		/* time the test */
+		/* Run benchmark. */
 		r.re_t0 = getnsecs();
 		(void) benchmark(arg, &r);
 		r.re_t1 = getnsecs();
 
-		/* time to stop? */
+		/* Time to stop? */
 		if (r.re_t1 > lm_barrier->ba_deadline &&
 		    (!lm_optC || lm_optC < lm_barrier->ba_batches)) {
 			lm_barrier->ba_flag = 0;
 		}
 
-		/* record results and sync */
+		/* Record results and sync. */
 		(void) barrier_queue(lm_barrier, &r);
-
 		(void) benchmark_finibatch(arg);
-
 		r.re_errors = 0;
 	}
 
@@ -553,7 +520,6 @@ print_warnings(barrier_t *b)
 	/*
 	 * XXX should warn on median != mean by a lot
 	 */
-
 	if (b->ba_errors) {
 		if (!head++) {
 			(void) printf("#\n# WARNINGS\n");
@@ -632,13 +598,13 @@ update_stats(barrier_t *b, result_t *r)
 	double			nsecs_per_call;
 
 	if (b->ba_waiters == 0) {
-		/* first thread only */
+		/* First thread only. */
 		b->ba_t0 = r->re_t0;
 		b->ba_t1 = r->re_t1;
 		b->ba_count0 = 0;
 		b->ba_errors0 = 0;
 	} else {
-		/* all but first thread */
+		/* All but first thread */
 		if (r->re_t0 < b->ba_t0) {
 			b->ba_t0 = r->re_t0;
 		}
@@ -651,9 +617,7 @@ update_stats(barrier_t *b, result_t *r)
 	b->ba_errors0 += r->re_errors;
 
 	if (b->ba_waiters == b->ba_hwm - 1) {
-		/* last thread only */
-
-
+		/* Last thread only. */
 		time = (double)b->ba_t1 - (double)b->ba_t0 -
 		    (double)nsecs_overhead;
 
@@ -661,9 +625,8 @@ update_stats(barrier_t *b, result_t *r)
 			b->ba_quant++;
 
 		/*
-		 * normalize by procs * threads if not -U
+		 * Normalize by (procs * threads) if not -U.
 		 */
-
 		nsecs_per_call = time / (double)b->ba_count0 *
 		    (double)(lm_optT * lm_optP);
 
@@ -684,7 +647,6 @@ barrier_create(int hwm, int datasize)
 	struct sembuf		s[1];
 	barrier_t		*b;
 
-	/*LINTED*/
 	b = (barrier_t *)mmap(NULL,
 	    sizeof (barrier_t) + (datasize - 1) * sizeof (double),
 	    PROT_READ | PROT_WRITE,
@@ -766,8 +728,7 @@ barrier_queue(barrier_t *b, result_t *r)
 			return (-1);
 		}
 
-		/* all but the last thread */
-
+		/* All but the last thread. */
 		if (r != NULL) {
 			update_stats(b, r);
 		}
@@ -797,8 +758,7 @@ barrier_queue(barrier_t *b, result_t *r)
 		}
 
 	} else {
-		/* the last thread */
-
+		/* The last thread */
 		if (r != NULL) {
 			update_stats(b, r);
 		}
@@ -827,7 +787,6 @@ barrier_create(int hwm, int datasize)
 	pthread_condattr_t	cattr;
 	barrier_t		*b;
 
-	/*LINTED*/
 	b = (barrier_t *)mmap(NULL,
 	    sizeof (barrier_t) + (datasize - 1) * sizeof (double),
 	    PROT_READ | PROT_WRITE,
@@ -1150,17 +1109,17 @@ print_histo(barrier_t *b)
 	(void) printf("#	%12s %12s %32s %12s\n", "counts", "usecs/call",
 	    "", "means");
 
-	/* calculate how much data we've captured */
+	/* Calculate amount of data captured. */
 	n = b->ba_batches > b->ba_datasize ? b->ba_datasize : b->ba_batches;
 
-	/* find the 95th percentile - index, value and range */
+	/* Find the 95th percentile - index, value and range. */
 	qsort((void *)b->ba_data, n, sizeof (double), doublecmp);
 	min = b->ba_data[0] + 0.000001;
 	i95 = n * 95 / 100;
 	p95 = b->ba_data[i95];
 	r95 = p95 - min + 1;
 
-	/* find a suitable min and scale */
+	/* Find a suitable min and scale. */
 	i = 0;
 	x = r95 / (HISTOSIZE - 1);
 	while (x >= 10.0) {
@@ -1179,14 +1138,14 @@ print_histo(barrier_t *b)
 		scale = (HISTOSIZE - 1);
 	}
 
-	/* create and initialise the histogram */
+	/* Create and initialise the histogram. */
 	histo = malloc(HISTOSIZE * sizeof (histo_t));
 	for (i = 0; i < HISTOSIZE; i++) {
 		histo[i].sum = 0.0;
 		histo[i].count = 0;
 	}
 
-	/* populate the histogram */
+	/* Populate the histogram. */
 	last = 0;
 	sum = 0.0;
 	count = 0;
@@ -1206,7 +1165,7 @@ print_histo(barrier_t *b)
 	}
 	m95 = sum / count;
 
-	/* find the larges bucket */
+	/* Find the largest bucket. */
 	maxcount = 0;
 	for (i = 0; i < HISTOSIZE; i++)
 		if (histo[i].count > 0) {
@@ -1215,7 +1174,7 @@ print_histo(barrier_t *b)
 				maxcount = histo[i].count;
 		}
 
-	/* print the buckets */
+	/* Print the buckets. */
 	for (i = 0; i <= last; i++) {
 		(void) printf("#       %12lld %12.5f |", histo[i].count,
 		    (min + scale * (double)i / (HISTOSIZE - 1)));
@@ -1229,7 +1188,7 @@ print_histo(barrier_t *b)
 			(void) printf("%12s\n", "-");
 	}
 
-	/* find the mean of values beyond the 95th percentile */
+	/* Find the mean of values beyond the 95th percentile. */
 	sum = 0.0;
 	count = 0;
 	for (i = i95; i < n; i++) {
@@ -1237,7 +1196,7 @@ print_histo(barrier_t *b)
 		count++;
 	}
 
-	/* print the >95% bucket summary */
+	/* Print the >95% bucket summary. */
 	(void) printf("#\n");
 	(void) printf("#       %12lld %12s |", count, "> 95%");
 	print_bar(count, maxcount);
@@ -1249,7 +1208,7 @@ print_histo(barrier_t *b)
 	(void) printf("#       %12s %12.5f\n", "mean of 95%", m95);
 	(void) printf("#       %12s %12.5f\n", "95th %ile", p95);
 
-	/* quantify any buffer overflow */
+	/* Quantify any buffer overflow. */
 	if (b->ba_batches > b->ba_datasize)
 		(void) printf("#       %12s %12d\n", "data dropped",
 		    b->ba_batches - b->ba_datasize);
@@ -1263,27 +1222,19 @@ compute_stats(barrier_t *b)
 	if (b->ba_batches > b->ba_datasize)
 		b->ba_batches = b->ba_datasize;
 
-	/*
-	 * convert to usecs/call
-	 */
-
+	/* convert to usecs/call. */
 	for (i = 0; i < b->ba_batches; i++)
 		b->ba_data[i] /= 1000.0;
 
-	/*
-	 * do raw stats
-	 */
-
+	/* Calculate raw stats. */
 	(void) crunch_stats(b->ba_data, b->ba_batches, &b->ba_raw);
 
-	/*
-	 * recursively apply 3 sigma rule to remove outliers
-	 */
-
+	/* Recursively apply 3 sigma rule to remove outliers. */
 	b->ba_corrected = b->ba_raw;
 	b->ba_outliers = 0;
 
-	if (b->ba_batches > 40) { /* remove outliers */
+	/* Remove outliers. */
+	if (b->ba_batches > 40) {
 		int removed;
 
 		do {
@@ -1299,9 +1250,8 @@ compute_stats(barrier_t *b)
 }
 
 /*
- * routine to compute various statistics on array of doubles.
+ * Compute various statistics on array of doubles.
  */
-
 static int
 crunch_stats(double *data, int count, stats_t *stats)
 {
@@ -1315,10 +1265,7 @@ crunch_stats(double *data, int count, stats_t *stats)
 	int bytes;
 	double *dupdata;
 
-	/*
-	 * first we need the mean
-	 */
-
+	/* Calculate the mean. */
 	mean = 0.0;
 
 	for (i = 0; i < count; i++) {
@@ -1329,20 +1276,16 @@ crunch_stats(double *data, int count, stats_t *stats)
 
 	stats->st_mean = mean;
 
-	/*
-	 * malloc and sort so we can do median
-	 */
-
+	/* Calculate the median. */
 	dupdata = malloc(bytes = sizeof (double) * count);
 	(void) memcpy(dupdata, data, bytes);
 	qsort((void *)dupdata, count, sizeof (double), doublecmp);
 	stats->st_median   = dupdata[count/2];
 
 	/*
-	 * reuse dupdata to compute time correlation of data to
-	 * detect interesting time-based trends
+	 * Reuse dupdata to compute time correlation of data to detect
+	 * interesting time-based trends.
 	 */
-
 	for (i = 0; i < count; i++)
 		dupdata[i] = (double)i;
 
@@ -1354,7 +1297,7 @@ crunch_stats(double *data, int count, stats_t *stats)
 	ku  = 0.0;
 
 	stats->st_max = -1;
-	stats->st_min = 1.0e99; /* hard to find portable values */
+	stats->st_min = 1.0e99; /* Hard to find portable values. */
 
 	for (i = 0; i < count; i++) {
 		if (data[i] > stats->st_max)
@@ -1379,10 +1322,9 @@ crunch_stats(double *data, int count, stats_t *stats)
 }
 
 /*
- * does a least squares fit to the set of points x, y and
- * fits a line y = a + bx.  Returns a, b
+ * Does a least squares fit to the set of points x, y and
+ * fits a line y = a + bx. Returns a, b.
  */
-
 int
 fit_line(double *x, double *y, int count, double *a, double *b)
 {
@@ -1412,9 +1354,8 @@ fit_line(double *x, double *y, int count, double *a, double *b)
 }
 
 /*
- * empty function for measurement purposes
+ * Empty function for measurement purposes.
  */
-
 int
 nop()
 {
@@ -1435,9 +1376,10 @@ get_nsecs_overhead()
 	int count;
 	int outliers;
 
-	(void) getnsecs(); /* warmup */
-	(void) getnsecs(); /* warmup */
-	(void) getnsecs(); /* warmup */
+	/* Warmup. */
+	(void) getnsecs();
+	(void) getnsecs();
+	(void) getnsecs();
 
 	i = 0;
 
@@ -1465,6 +1407,7 @@ get_nsecs_overhead()
  * use course resolution (e.g. derived instead by a periodic interrupt).
  *
  * Algorithm:
+ *
  * Determine a busy loop that is long enough for successive nanosecond counter
  * reads to report different times.  Then take 1000 samples with busy loop
  * interval successively increases by i.  The counter resolution is assumed
@@ -1484,15 +1427,9 @@ get_nsecs_resolution()
 	long long start, stop;
 
 	/*
-	 * first, figure out how many nops to use
-	 * to get any delta between time measurements.
-	 * use a minimum of one.
+	 * First, figure out how many nops to use to get any delta
+	 * between time measurements. use a minimum of one.
 	 */
-
-	/*
-	 * warm cache
-	 */
-
 	stop = start = getnsecs();
 
 	for (i = 1; i < 10000000; i++) {
@@ -1506,10 +1443,7 @@ get_nsecs_resolution()
 
 	nops = i;
 
-	/*
-	 * now collect data at linearly varying intervals
-	 */
-
+	/* Now collect data at linearly varying intervals. */
 	for (i = 0; i < 1000; i++) {
 		start = getnsecs();
 		for (j = nops * i; j; j--)
@@ -1519,10 +1453,9 @@ get_nsecs_resolution()
 	}
 
 	/*
-	 * find smallest positive difference between samples;
-	 * this is the counter resolution
+	 * Find smallest positive difference between samples; this is
+	 * the counter resolution.
 	 */
-
 	res = y[0];
 	for (i = 1; i < 1000; i++) {
 		int diff = y[i] - y[i-1];
@@ -1538,9 +1471,8 @@ get_nsecs_resolution()
 }
 
 /*
- * remove any data points from the array more than 3 sigma out
+ * Remove any data points from the array more than 3 sigma out.
  */
-
 static int
 remove_outliers(double *data, int count, stats_t *stats)
 {
