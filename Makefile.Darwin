@@ -13,10 +13,10 @@
 # Copyright 2015 Ryan Zezeski
 #
 
-CC=		cc
+CC=cc
 
-CPPFLAGS=	-DUSE_SEMOP -D_REENTRANT
-MATHLIB=	-lm
+CPPFLAGS=-DUSE_SEMOP
+MATHLIB=-lm
 
 ELIDED_BENCHMARKS=	\
 	atomic 		\

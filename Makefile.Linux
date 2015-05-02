@@ -14,9 +14,9 @@
 # Use is subject to license terms.
 #
 
-CC=		gcc
+CC=gcc
 
-CPPFLAGS=-DUSE_SEMOP -D_REENTRANT -DUSE_POSIX -D_GNU_SOURCE
+CPPFLAGS=-DUSE_SEMOP -DUSE_POSIX -D_GNU_SOURCE
 MATHLIB=-lm
 EXTRA_LIBS=-lrt
 
