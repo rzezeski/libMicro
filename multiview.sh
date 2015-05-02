@@ -25,15 +25,20 @@
 #	the redder the color, the slower the result, the greener the
 #       faster
 
-/bin/nawk '	BEGIN {
+case $(uname -m) in
+	"SunOS")	AWK=/bin/nawk ;;
+	*)		AWK=/usr/bin/awk ;;
+esac
+
+$AWK '	BEGIN {
   benchmark_count = 0;
   header_count = 0;
 }
 /^#/ {
-	continue;
+	next;
 	}
 /errors/ {
-	continue;
+	next;
 	}
 /^\!/ {
 	split($0, A_header, ":");
@@ -44,7 +49,7 @@
 		header_names[name] = ++header_count;
 		headers[header_count] = name;
 	}
-	continue;
+	next;
 }
 
 /^[a-zA-z_]/	{
