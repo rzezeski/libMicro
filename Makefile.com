@@ -54,7 +54,6 @@ libmicro.ln: ../libmicro.c ../libmicro_main.c ../libmicro.h ../benchmark_*.c
 CPPFLAGS+= -D_REENTRANT
 
 bind_EXTRA_LIBS=$(NSLLIB) $(SOCKLIB)
-cascade_flock_EXTRA_LIBS=$(UCBLIB)
 close_tcp_EXTRA_LIBS=$(NSLLIB) $(SOCKLIB)
 connection_EXTRA_LIBS=$(NSLLIB) $(SOCKLIB)
 fcntl_ndelay_EXTRA_LIBS=$(SOCKLIB)

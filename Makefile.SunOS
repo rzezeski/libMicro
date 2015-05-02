@@ -17,13 +17,12 @@
 
 CPPFLAGS=-DUSE_GETHRTIME -D_XOPEN_SOURCE=600 -D__EXTENSIONS__
 CFLAGS=-O $(extra_CFLAGS)
-ELIDED_BENCHMARKS=cascade_flock cachetocache
+ELIDED_BENCHMARKS=cachetocache
 
 include ../Makefile.com
 
 NSLLIB=		-lnsl
 SOCKLIB=	-lsocket
-UCBLIB=		-lc -L/usr/ucblib -lucb -R/usr/ucblib
 MATHLIB=	-lm
 
 .KEEP_STATE:

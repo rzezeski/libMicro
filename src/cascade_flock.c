@@ -33,16 +33,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <fcntl.h>
-#ifdef __linux
 #include <sys/file.h>
-#endif
 
 #include "libmicro.h"
-
-#ifndef LOCK_EX
-#include "/usr/ucbinclude/sys/file.h"
-extern int flock(int fd, int operation);
-#endif
 
 typedef struct {
 	int			ts_once;
