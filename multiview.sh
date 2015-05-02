@@ -24,8 +24,8 @@
 #	color interpolation is done to indicate relative performance;
 #	the redder the color, the slower the result, the greener the
 #       faster
- 
-/bin/nawk '	BEGIN { 
+
+/bin/nawk '	BEGIN {
   benchmark_count = 0;
   header_count = 0;
 }
@@ -35,10 +35,10 @@
 /errors/ {
 	continue;
 	}
-/^\!/ { 
-	split($0, A_header, ":"); 
+/^\!/ {
+	split($0, A_header, ":");
 	name = substr(A_header[1],2);
-	headers[name]=name; 
+	headers[name]=name;
 	header_data[name,FILENAME] = substr($0, length(name) + 3);
 	if (header_names[name] == 0) {
 		header_names[name] = ++header_count;
@@ -59,7 +59,7 @@
 }
 
 
-END { 
+END {
 	printf("<!DOCTYPE html PUBLIC \"-//W3C//DTD XHTML 1.0 Transitional//EN\"\n");
 	printf("\"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd\">\n");
 	printf("<html xmlns=\"http://www.w3.org/1999/xhtml\">\n");
@@ -81,7 +81,7 @@ END {
 	for(i = 1; i <= header_count; i++) {
 		hname = headers[i];
 		printf("<tr><td class=\"header\">%s</td>\n", hname);
-		
+
 		for (j = 1; j < ARGC; j++) {
 			sub("^[\t ]+", "", header_data[hname, ARGV[j]]);
 			printf("<td class=\"header\">%s</td>\n", header_data[hname, ARGV[j]]);
@@ -92,14 +92,14 @@ END {
 	printf("<th>BENCHMARK</th>\n");
 	printf("<th align=\"right\">USECS</th>\n");
 
-	for (i = 2; i < ARGC; i++) 
+	for (i = 2; i < ARGC; i++)
 		printf("<th align=\"right\">USECS [percentage]</th>\n");
 
 	printf("</tr>\n");
 	for(i = 1; i < benchmark_count; i++) {
 	  for(j = 1; j < benchmark_count; j++) {
 	    if (benchmarks[j] > benchmarks[j + 1]) {
-	      tmp = benchmarks[j]; 
+	      tmp = benchmarks[j];
 	      benchmarks[j] =  benchmarks[j+1];
 	      benchmarks[j+1] = tmp;
 	    }
@@ -117,10 +117,10 @@ END {
 		else {
 			if (a < 0)
 				printf("<td bgcolor=\"#ff0000\">%s</td>\n", "ERROR");
-			else 
+			else
 				printf("<td>%s</td>\n", "missing");
-				
-			for (j = 2; j < ARGC; j++) 
+
+			for (j = 2; j < ARGC; j++)
 				printf("<td>%s</td>\n", "not computed");
 			continue;
 		}
@@ -134,26 +134,26 @@ END {
 				  percentage = -(factor * 100 - 100);
 				if (factor <= 1)
 				  percentage = 100/factor - 100;
-				
-				printf("<td bgcolor=\"%s\"><pre>%11.5f[%#+7.1f%%]</pre></td>\n", 
+
+				printf("<td bgcolor=\"%s\"><pre>%11.5f[%#+7.1f%%]</pre></td>\n",
 					bgcolor, b, percentage);
 			}
-			
-			else if (b < 0) 
+
+			else if (b < 0)
 				printf("<td bgcolor=\"#ff0000\">%s</td>\n", "ERRORS");
 			else
 				printf("<td>%25s</td>\n", "missing");
-			
+
 		}
 		printf("</tr>\n");
 
 	}
 	printf("</tbody></table></body></html>\n");
 
-} 
+}
 
-function colormap(value, bgcolor, r, g, b) 
-{	
+function colormap(value, bgcolor, r, g, b)
+{
 	if (value <= .2)
 		value = .2;
 	if (value > 5)
@@ -183,5 +183,3 @@ function colorcalc(min, value, max, mincolor, maxcolor)
 }
 
 ' "$@"
-
-
