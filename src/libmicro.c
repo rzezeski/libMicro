@@ -943,6 +943,45 @@ getusecs()
 	return (((uint64_t)tv.tv_sec * 1000000L) + tv.tv_usec);
 }
 
+#ifdef __APPLE__
+
+#include <mach/mach_time.h>
+
+/*
+ * There are plenty of articles out there explaining the use of
+ * mach_absolute_time() for high resolution timing on OSX. Many of
+ * them are dated -- don't hurt yourself.
+ *
+ * https://developer.apple.com/library/mac/qa/qa1398/_index.html
+ * http://stackoverflow.com/questions/23378063/\
+ * how-can-i-use-mach-absolute-time-without-overflowing
+ *
+ */
+uint64_t
+getnsecs()
+{
+	static mach_timebase_info_data_t	tbi;
+
+	if (tbi.denom == 0) {
+		(void) mach_timebase_info(&tbi);
+		/*
+		 * See clock_timebase_info() in xnu/osfmk/i386/rtclock.c
+		 *
+		 * Numer & denom are always 1 because
+		 * mach_absolute_time() is already scaled to nanos on
+		 * modern hardware. If assert fails then either things
+		 * have changed or running on older hardware.
+		 *
+		 */
+		assert(tbi.numer == 1);
+		assert(tbi.denom == 1);
+	}
+
+	return (mach_absolute_time());
+}
+
+#elif
+
 uint64_t
 getnsecs()
 {
@@ -951,6 +990,8 @@ getnsecs()
 	return (((uint64_t)tv.tv_sec * 1000000000L) +
 	    ((uint64_t) tv.tv_usec * 1000));
 }
+
+#endif /* __APPLE__ */
 
 #endif /* USE_GETHRTIME */
 

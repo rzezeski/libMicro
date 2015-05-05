@@ -18,6 +18,7 @@
 #ifndef LIBMICRO_H
 #define	LIBMICRO_H
 
+#include <assert.h>
 #include <errno.h>
 #include <pthread.h>
 #include <stdint.h>
