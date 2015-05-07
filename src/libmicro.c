@@ -868,28 +868,15 @@ gettsd(int p, int t)
 	    (((p * lm_optT) + t) * tsdsize)));
 }
 
-#ifdef USE_GETHRTIME
-uint64_t
-getnsecs()
-{
-	return (gethrtime());
-}
-
 uint64_t
 getusecs()
 {
-	return (gethrtime() / 1000);
+	struct timeval tv;
+	(void) gettimeofday(&tv, NULL);
+	return (((uint64_t)tv.tv_sec * 1000000L) + tv.tv_usec);
 }
 
-#elif USE_POSIX /* USE_GETHRTIME */
-
-uint64_t
-getusecs()
-{
-	struct timespec ts;
-	(void) clock_gettime(CLOCK_MONOTONIC, &ts);
-	return (((uint64_t)ts.tv_sec * 1000000L) + (ts.tv_nsec / 1000L));
-}
+#if defined(__sun) || defined(__linux)
 
 uint64_t
 getnsecs()
@@ -899,17 +886,7 @@ getnsecs()
 	return (((uint64_t)ts.tv_sec * 1000000000L) + ts.tv_nsec);
 }
 
-#else /* USE_GETHRTIME */
-
-uint64_t
-getusecs()
-{
-	struct timeval tv;
-	(void) gettimeofday(&tv, NULL);
-	return (((uint64_t)tv.tv_sec * 1000000L) + tv.tv_usec);
-}
-
-#ifdef __APPLE__
+#elif defined(__APPLE__)
 
 #include <mach/mach_time.h>
 
@@ -948,11 +925,9 @@ getnsecs()
 
 #else
 
-#error "No nanosecond-resolution time source found."
+#error "Unsupported platform."
 
-#endif /* __APPLE__ */
-
-#endif /* USE_GETHRTIME */
+#endif /* defined(__sun) || defined(__linux) */
 
 int
 setfdlimit(unsigned int limit)
