@@ -102,7 +102,7 @@ main(int argc, char *argv[])
 
 		case 'r':
 
-			(void) printf("%lld nsecs\n", get_nsecs_resolution());
+			(void) printf("%d nsecs\n", 1);
 			break;
 
 		case 'R':

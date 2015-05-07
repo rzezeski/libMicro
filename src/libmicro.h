@@ -176,7 +176,6 @@ int 		setfdlimit(unsigned int limit);
 long long 	sizetoll();
 int 		sizetoint();
 int		fit_line(double *, double *, int, double *, double *);
-long long	get_nsecs_resolution();
 void		lm_err();
 
 /*

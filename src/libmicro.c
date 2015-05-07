@@ -137,7 +137,7 @@ actual_main(int argc, char *argv[])
 	(void) benchmark_init();
 
 	nsecs_overhead = get_nsecs_overhead();
-	nsecs_resolution = get_nsecs_resolution();
+	nsecs_resolution = 1;
 
 	/* Set defaults */
 	lm_opt1	= lm_def1;
@@ -980,16 +980,9 @@ getnsecs()
 	return (mach_absolute_time());
 }
 
-#elif
+#else
 
-uint64_t
-getnsecs()
-{
-	struct timeval tv;
-	(void) gettimeofday(&tv, NULL);
-	return (((uint64_t)tv.tv_sec * 1000000000L) +
-	    ((uint64_t) tv.tv_usec * 1000));
-}
+#error "No nanosecond-resolution time source found."
 
 #endif /* __APPLE__ */
 
@@ -1432,75 +1425,6 @@ get_nsecs_overhead()
 
 	return ((long long)stats.st_mean);
 
-}
-
-/*
- * Determine the resolution of the system's high resolution counter.
- * Most hardware has a nanosecond resolution counter, but some systems still
- * use course resolution (e.g. derived instead by a periodic interrupt).
- *
- * Algorithm:
- *
- * Determine a busy loop that is long enough for successive nanosecond counter
- * reads to report different times.  Then take 1000 samples with busy loop
- * interval successively increases by i.  The counter resolution is assumed
- * to be the smallest non-zero time delta between these 1000 samples.
- *
- * One last wrinkle is all 1000 samples may have the same delta on a system
- * with a very fast and consistent hardware counter based getnsecs().
- * In that case assume the resolution is 1ns.
- */
-long long
-get_nsecs_resolution()
-{
-	long long y[1000];
-
-	volatile int i, j;
-	int nops, res;
-	long long start, stop;
-
-	/*
-	 * First, figure out how many nops to use to get any delta
-	 * between time measurements. use a minimum of one.
-	 */
-	stop = start = getnsecs();
-
-	for (i = 1; i < 10000000; i++) {
-		start = getnsecs();
-		for (j = i; j; j--)
-			;
-		stop = getnsecs();
-		if (stop > start)
-			break;
-	}
-
-	nops = i;
-
-	/* Now collect data at linearly varying intervals. */
-	for (i = 0; i < 1000; i++) {
-		start = getnsecs();
-		for (j = nops * i; j; j--)
-			;
-		stop = getnsecs();
-		y[i] = stop - start;
-	}
-
-	/*
-	 * Find smallest positive difference between samples; this is
-	 * the counter resolution.
-	 */
-	res = y[0];
-	for (i = 1; i < 1000; i++) {
-		int diff = y[i] - y[i-1];
-
-		if (diff > 0 && res > diff)
-			res = diff;
-
-	}
-	if (res == 0)
-		res = 1;
-
-	return (res);
 }
 
 /*
