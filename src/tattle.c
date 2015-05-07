@@ -24,13 +24,6 @@
 #include "libmicro.h"
 #include <math.h>
 
-
-#ifdef USE_RDTSC
-#ifdef __GNUC__
-#define	ENABLE_RDTSC 1
-#endif
-#endif
-
 /*
  * dummy so we can link w/ libmicro
  */
@@ -103,34 +96,6 @@ main(int argc, char *argv[])
 		case 'r':
 
 			(void) printf("%d nsecs\n", 1);
-			break;
-
-		case 'R':
-#ifdef ENABLE_RDTSC
-			{
-				struct timeval 	s;
-				struct timeval	f;
-				long long 	start_nsecs;
-				long long 	end_nsecs;
-				long 		elapsed_usecs;
-
-				gettimeofday(&s, NULL);
-				start_nsecs = rdtsc();
-				for (;;) {
-					gettimeofday(&f, NULL);
-					elapsed_usecs = (f.tv_sec - s.tv_sec) *
-					    1000000 + (f.tv_usec - s.tv_usec);
-					if (elapsed_usecs > 1000000)
-						break;
-				}
-				end_nsecs = rdtsc();
-				(void) printf("LIBMICRO_HZ=%lld\n",
-				    (long long)elapsed_usecs *
-				    (end_nsecs - start_nsecs) / 1000000LL);
-			}
-#else
-			(void) printf("\n");
-#endif
 			break;
 		}
 	}

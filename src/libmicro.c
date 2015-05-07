@@ -92,10 +92,6 @@ static int			pindex = -1;
 static void			*tsdseg = NULL;
 static size_t			tsdsize = 0;
 
-#ifdef USE_RDTSC
-static long long		lm_hz = 0;
-#endif
-
 static void 		worker_process();
 static void 		usage();
 static void 		print_stats(barrier_t *);
@@ -120,14 +116,6 @@ actual_main(int argc, char *argv[])
 	char			optstr[256];
 	barrier_t		*b;
 	long long		startnsecs;
-
-#ifdef USE_RDTSC
-	if (getenv("LIBMICRO_HZ") == NULL) {
-		(void) printf("LIBMICRO_HZ needed but not set\n");
-		exit(1);
-	}
-	lm_hz = strtoll(getenv("LIBMICRO_HZ"), NULL, 10);
-#endif
 
 	startnsecs = getnsecs();
 
@@ -891,28 +879,6 @@ uint64_t
 getusecs()
 {
 	return (gethrtime() / 1000);
-}
-
-#elif USE_RDTSC /* USE_GETHRTIME */
-
-__inline__ uint64_t
-rdtsc(void)
-{
-	uint64_t x;
-	__asm__ volatile(".byte 0x0f, 0x31" : "=A" (x));
-	return (x);
-}
-
-uint64_t
-getusecs()
-{
-	return (rdtsc() * 1000000 / lm_hz);
-}
-
-uint64_t
-getnsecs()
-{
-	return (rdtsc() * 1000000000 / lm_hz);
 }
 
 #elif USE_POSIX /* USE_GETHRTIME */
