@@ -43,7 +43,6 @@ int
 benchmark_init()
 {
 	(void) sprintf(lm_usage, "note: measures log()");
-	lm_nsecs_per_op = 75;
 	lm_tsdsize = 0;
 	return (0);
 }
@@ -54,7 +53,7 @@ benchmark(void *tsd, result_t *res)
 {
 	int			i;
 
-	for (i = 0; i < lm_optB; i += 10) {
+	for (i = 0; i < 10; i += 10) {
 		double value = i + .01;
 		(void) log(value);
 		(void) log(value);
@@ -67,7 +66,6 @@ benchmark(void *tsd, result_t *res)
 		(void) log(value);
 		(void) log(value);
 	}
-	res->re_count = i;
 
 	return (0);
 }

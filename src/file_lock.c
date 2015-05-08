@@ -74,13 +74,7 @@ benchmark_init()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
-
-	for (i = 0; i < lm_optB; i ++) {
-		block(0);
-		unblock(0);
-	}
-	res->re_count = i;
-
+	block(0);
+	unblock(0);
 	return (0);
 }

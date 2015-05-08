@@ -151,7 +151,6 @@ benchmark_initrun()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	fd_set			set1;
 	fd_set			set2;
 	fd_set		*my_iset = &set1;
@@ -162,13 +161,9 @@ benchmark(void *tsd, result_t *res)
 		my_oset = &set2;
 	}
 
-	for (i = 0; i < lm_optB; i++) {
-		(void) memcpy(&set1, &iset, sizeof (fd_set));
-		(void) memcpy(&set2, &oset, sizeof (fd_set));
-
-		LM_CHK(select(maxfd, my_iset, my_oset, NULL, &tv) == target);
-	}
-	res->re_count = i;
+	(void) memcpy(&set1, &iset, sizeof (fd_set));
+	(void) memcpy(&set2, &oset, sizeof (fd_set));
+	LM_CHK(select(maxfd, my_iset, my_oset, NULL, &tv) == target);
 
 	return (0);
 }

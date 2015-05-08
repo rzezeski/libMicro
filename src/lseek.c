@@ -76,7 +76,7 @@ benchmark_optswitch(int opt, char *optarg)
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -91,13 +91,9 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i += 2) {
-		LM_CHK(lseek(ts->ts_fd, 0L, SEEK_SET) == 0);
-		LM_CHK(lseek(ts->ts_fd, opts, SEEK_SET) == opts);
-	}
-	res->re_count = i;
+	LM_CHK(lseek(ts->ts_fd, 0L, SEEK_SET) == 0);
+	LM_CHK(lseek(ts->ts_fd, opts, SEEK_SET) == opts);
 
 	return (0);
 }

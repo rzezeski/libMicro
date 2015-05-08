@@ -70,13 +70,9 @@ benchmark_initrun()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	int			flags;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
-	}
-	res->re_count = i;
+	LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
 
 	return (0);
 }

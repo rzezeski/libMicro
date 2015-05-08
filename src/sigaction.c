@@ -50,7 +50,7 @@ benchmark_init()
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	ts->ts_act.sa_handler = nop;
@@ -63,15 +63,10 @@ benchmark_initbatch(void *tsd)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	tsd_t			*ts = (tsd_t *)tsd;
 	struct sigaction	oact;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(sigaction(SIGUSR1, &ts->ts_act, &oact) == 0);
-	}
-
-	res->re_count += lm_optB;
+	LM_CHK(sigaction(SIGUSR1, &ts->ts_act, &oact) == 0);
 
 	return (0);
 }

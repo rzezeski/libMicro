@@ -83,12 +83,8 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(isatty(ts->ts_fd) != -1);
-	}
-	res->re_count = i;
+	LM_CHK(isatty(ts->ts_fd) != -1);
 
 	return (0);
 }

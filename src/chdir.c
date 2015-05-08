@@ -90,20 +90,16 @@ benchmark_initrun()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i, j = 0;
+	int			i;
 	char			buf[MAXPATHLEN];
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(chdir(dirlist[j]) == 0);
-		j++;
-		j %= dircount;
+	for (i = 0; i < dircount; i++) {
+		LM_CHK(chdir(dirlist[i]) == 0);
 
 		if (optg) {
 			LM_CHK(getcwd(buf, MAXPATHLEN) != NULL);
 		}
 	}
-
-	res->re_count = i;
 
 	return (0);
 }

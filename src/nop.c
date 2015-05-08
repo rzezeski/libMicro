@@ -51,13 +51,9 @@ benchmark_init()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int	i;
 	int	nop();
 
-	for (i = 0; i < lm_optB; i++)
-		(void) nop(); /* do nothing but the call */
-
-	res->re_count = i;
+	(void) nop(); /* do nothing but the call */
 
 	return (0);
 }

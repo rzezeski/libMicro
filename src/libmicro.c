@@ -45,22 +45,18 @@ char **				lm_argv = NULL;
 
 int				lm_opt1;
 int				lm_optA;
-int				lm_optB;
 int				lm_optC = 100;
 int				lm_optD;
 int				lm_optE;
 int				lm_optH;
-int				lm_optI;
 int				lm_optL = 0;
 int				lm_optM = 0;
 char				*lm_optN;
 int				lm_optP;
 int				lm_optS;
 int				lm_optT;
-int				lm_optW;
 
 int				lm_def1 = 0;
-int				lm_defB = 0; /* use lm_nsecs_per_op */
 int				lm_defD = 10;
 int				lm_defH = 0;
 char				*lm_defN = NULL;
@@ -68,12 +64,6 @@ int				lm_defP = 1;
 
 int				lm_defS = 0;
 int				lm_defT = 1;
-
-/*
- * Defaults on fast platform, should be overridden by individual
- * benchmarks if significantly wrong in either direction.
- */
-int				lm_nsecs_per_op = 5;
 
 char				*lm_procpath;
 char				lm_procname[STRSIZE];
@@ -129,7 +119,6 @@ actual_main(int argc, char *argv[])
 
 	/* Set defaults */
 	lm_opt1	= lm_def1;
-	lm_optB	= lm_defB;
 	lm_optD	= lm_defD;
 	lm_optH	= lm_defH;
 	lm_optN	= lm_defN;
@@ -174,9 +163,6 @@ actual_main(int argc, char *argv[])
 		case 'A':
 			lm_optA = 1;
 			break;
-		case 'B':
-			lm_optB = sizetoint(optarg);
-			break;
 		case 'C':
 			lm_optC = sizetoint(optarg);
 			break;
@@ -188,9 +174,6 @@ actual_main(int argc, char *argv[])
 			break;
 		case 'H':
 			lm_optH = 1;
-			break;
-		case 'I':
-			lm_optI = sizetoint(optarg);
 			break;
 		case 'L':
 			lm_optL = 1;
@@ -213,10 +196,6 @@ actual_main(int argc, char *argv[])
 		case 'V':
 			(void) printf("%s\n", LIBMICRO_VERSION);
 			exit(0);
-			break;
-		case 'W':
-			lm_optW = 1;
-			lm_optS = 1;
 			break;
 		case '?':
 			usage();
@@ -241,19 +220,6 @@ actual_main(int argc, char *argv[])
 		(void) fflush(stderr);
 	}
 
-	if (lm_optB == 0) {
-
-		/*
-		 * Neither benchmark or user has specified the number
-		 * of cnts/sample. Use computed value.
-		 */
-		if (lm_optI)
-			lm_nsecs_per_op = lm_optI;
-
-		lm_optB = nsecs_resolution * 100 / lm_nsecs_per_op;
-		if (lm_optB == 0)
-			lm_optB = 1;
-	}
 
 	LM_CHK(benchmark_initrun() != -1);
 
@@ -372,17 +338,18 @@ actual_main(int argc, char *argv[])
 
 	/* Print result header. */
 	if (!lm_optH) {
-		(void) printf("%12s %3s %3s %12s %12s %8s %s\n",
+		(void) printf("%12s %3s %3s %12s %12s %s\n",
 		    "", "prc", "thr",
 		    "usecs/call",
-		    "samples", "cnt/samp", lm_header);
+		    "samples", lm_header);
 	}
 
 	/* Print result. */
-	(void) printf("%-12s %3d %3d %12.5f %12d %8d %s\n",
+	(void) printf("%-12s %3d %3d %12.5f %12d %s\n",
 	    lm_optN, lm_optP, lm_optT,
 	    (lm_optM?b->ba_corrected.st_mean:b->ba_corrected.st_median),
-	    b->ba_batches, lm_optB,
+	    /* TODO: call ba_batches ba_samples or something */
+	    b->ba_batches,
 	    benchmark_result());
 
 	if (lm_optS) {
@@ -408,8 +375,7 @@ worker_thread(void *arg)
 	LM_CHK(benchmark_initworker(arg) == 0);
 
 	while (lm_barrier->ba_flag) {
-		r.re_count = 0;
-		LM_CHK(benchmark_initbatch(arg) == 0);
+		LM_CHK(benchmark_pre(arg) == 0);
 
 		/* Sync to clock. */
 		if (lm_optA && ((t = getnsecs()) - last_sleep) > 75000000LL) {
@@ -433,7 +399,7 @@ worker_thread(void *arg)
 
 		/* Record results and sync. */
 		(void) barrier_queue(lm_barrier, &r);
-		LM_CHK(benchmark_finibatch(arg) == 0);
+		LM_CHK(benchmark_post(arg) == 0);
 	}
 
 	LM_CHK(benchmark_finiworker(arg) == 0);
@@ -470,12 +436,10 @@ usage()
 	    "usage: %s\n"
 	    "       [-1] (single process; overrides -P > 1)\n"
 	    "       [-A] (align with clock)\n"
-	    "       [-B batch-size (default %d)]\n"
 	    "       [-C minimum number of samples (default 0)]\n"
 	    "       [-D duration in msecs (default %ds)]\n"
 	    "       [-E (echo name to stderr)]\n"
 	    "       [-H] (suppress headers)\n"
-	    "       [-I] nsecs per op (used to compute batch size)"
 	    "       [-L] (print argument line)\n"
 	    "       [-M] (reports mean rather than median)\n"
 	    "       [-N test-name (default '%s')]\n"
@@ -486,31 +450,8 @@ usage()
 	    "       [-W] (flag possible benchmark problems)\n"
 	    "%s\n",
 	    lm_procname,
-	    lm_defB, lm_defD, lm_procname, lm_defP, lm_defT,
+	    lm_defD, lm_procname, lm_defP, lm_defT,
 	    lm_usage);
-}
-
-void
-print_warnings(barrier_t *b)
-{
-	int head = 0;
-	int increase;
-
-	if (b->ba_quant) {
-		if (!head++) {
-			(void) printf("#\n# WARNINGS\n");
-		}
-		increase = (int)(floor((nsecs_resolution * 100.0) /
-		    ((double)lm_optB * b->ba_corrected.st_median * 1000.0)) +
-		    1.0);
-		(void) printf("#     Quantization error likely;"
-		    "increase batch size (-B option) %dX to avoid.\n",
-		    increase);
-	}
-
-	/*
-	 * XXX should warn on median != mean by a lot
-	 */
 }
 
 void
@@ -570,10 +511,6 @@ print_stats(barrier_t *b)
 	(void) printf("# DISTRIBUTION\n");
 
 	print_histo(b);
-
-	if (lm_optW) {
-		print_warnings(b);
-	}
 }
 
 void
@@ -597,18 +534,18 @@ update_stats(barrier_t *b, result_t *r)
 		}
 	}
 
-	b->ba_count0  += r->re_count;
+	b->ba_count0  += 1;
 
 	if (b->ba_waiters == b->ba_hwm - 1) {
 		/* Last thread only. */
 		time = (double)b->ba_t1 - (double)b->ba_t0 -
 		    (double)nsecs_overhead;
 
-		if (time < 100 * nsecs_resolution)
-			b->ba_quant++;
-
 		/*
 		 * Normalize by (procs * threads) if not -U.
+		 *
+		 * TODO: this is taking an average across
+		 * threads/processes, averages are bad.
 		 */
 		nsecs_per_call = time / (double)b->ba_count0 *
 		    (double)(lm_optT * lm_optP);

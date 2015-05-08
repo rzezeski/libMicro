@@ -108,37 +108,22 @@ benchmark_initworker(void *tsd)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	tsd_t			*ts = (tsd_t *)tsd;
 
 	if (optu) {
 		char *buf = ts->ts_buff + ts->ts_offset;
 		char *end = ts->ts_buff + ts->ts_size;
 		int offset = ts->ts_offset;
-		for (i = 0; i < lm_optB; i ++) {
-			(void) memset(buf, 0, opts);
-			buf = (char *)(((unsigned long)buf + opts + 4095) &
-			    ~4095) + offset;
-			if (buf + opts > end)
-				buf = ts->ts_buff + offset;
-		}
+
+		(void) memset(buf, 0, opts);
+		buf = (char *)(((unsigned long)buf + opts + 4095) &
+		    ~4095) + offset;
+		if (buf + opts > end)
+			buf = ts->ts_buff + offset;
 	} else {
 		char *buf = ts->ts_buff + ts->ts_offset;
-
-		for (i = 0; i < lm_optB; i += 10) {
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-			(void) memset(buf, 0, opts);
-		}
+		(void) memset(buf, 0, opts);
 	}
-	res->re_count = i;
 
 	return (0);
 }

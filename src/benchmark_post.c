@@ -10,34 +10,16 @@
  */
 
 /*
- * Copyright 2005 Sun Microsystems, Inc.  All rights reserved.
- * Use is subject to license terms.
+ * Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
  */
-
-/*
- * test exp performance (should add range check)
- */
-
-#include <unistd.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
 
 #include "libmicro.h"
 
+/*
+ * Default benchmark_post() hook.
+ */
 int
-benchmark_init()
+benchmark_post(void *tsd)
 {
-	(void) sprintf(lm_usage, "note: measures exp()");
-	lm_tsdsize = 0;
-	return (0);
-}
-
-/*ARGSUSED*/
-int
-benchmark(void *tsd, result_t *res)
-{
-	(void) exp(1.0 / .01);
-
 	return (0);
 }

@@ -42,7 +42,6 @@ int
 benchmark_init()
 {
 	(void) sprintf(lm_usage, "note: measures lrand48()");
-	lm_nsecs_per_op = 10;
 	lm_tsdsize = 0;
 	return (0);
 }
@@ -51,21 +50,16 @@ benchmark_init()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
-
-	for (i = 0; i < lm_optB; i += 10) {
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-		(void) lrand48();
-	}
-	res->re_count = i;
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
+	(void) lrand48();
 
 	return (0);
 }

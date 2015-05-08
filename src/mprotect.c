@@ -27,7 +27,7 @@
 typedef volatile char		vchar_t;
 
 typedef struct {
-	int			ts_batch;
+	int			ts_run;
 	int			ts_res;
 } tsd_t;
 
@@ -110,23 +110,23 @@ benchmark_initrun()
 	flags = opts ? MAP_SHARED : MAP_PRIVATE;
 	flags |= anon ? MAP_ANON : 0;
 
-	seg = (vchar_t *)mmap(NULL, lm_optB * optl, PROT_READ | PROT_WRITE,
+	seg = (vchar_t *)mmap(NULL, optl, PROT_READ | PROT_WRITE,
 	    flags, anon ? -1 : fd, 0L);
 	LM_CHK(seg != MAP_FAILED);
 
+	pagesize = getpagesize();
+
 	if (optr) {
-		for (i = 0; i < lm_optB * optl; i += 4096) {
+		for (i = 0; i < optl; i += pagesize) {
 			foo += seg[i];
 		}
 	}
 
 	if (optw) {
-		for (i = 0; i < lm_optB * optl; i += 4096) {
+		for (i = 0; i < optl; i += pagesize) {
 			seg[i] = 1;
 		}
 	}
-
-	pagesize = getpagesize();
 
 	return (0);
 }
@@ -135,31 +135,28 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 	int			us;
 	int			prot = PROT_NONE;
 	int			j, k;
 
 	us = (getpindex() * lm_optT) + gettindex();
-	for (i = 0; i < lm_optB; i++) {
-		switch ((us + ts->ts_batch + i) % 2) {
-		case 0:
-			prot = PROT_NONE;
-			if (optt) {
-				for (j = k = 0; j < optl; j += pagesize)
-					k += seg[i * optl + j];
-				ts->ts_res += k;
-			}
-			break;
-		default:
-			prot = PROT_READ | PROT_WRITE;
-			break;
-		}
 
-		LM_CHK(mprotect((void *)&seg[i * optl], optl, prot) == 0);
+	switch ((us + ts->ts_run) % 2) {
+	case 0:
+		prot = PROT_NONE;
+		if (optt) {
+			for (j = k = 0; j < optl; j += pagesize)
+				k += seg[j];
+			ts->ts_res += k;
+		}
+		break;
+	default:
+		prot = PROT_READ | PROT_WRITE;
+		break;
 	}
-	res->re_count += lm_optB;
-	ts->ts_batch++;
+
+	LM_CHK(mprotect((void *)seg, optl, prot) == 0);
+	ts->ts_run++;
 
 	return (0);
 }

@@ -67,7 +67,7 @@ benchmark_initworker(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	LM_CHK((ts->ts_threads = calloc(lm_optB, sizeof (pthread_t))) != NULL);
+	LM_CHK((ts->ts_threads = calloc(1, sizeof (pthread_t))) != NULL);
 	LM_CHK(pthread_mutex_init(&ts->ts_lock, NULL) == 0);
 
 	if (opts) {
@@ -82,7 +82,7 @@ benchmark_initworker(void *tsd)
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -106,28 +106,19 @@ func(void *tsd)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(pthread_create(ts->ts_threads + i,
-			ts->ts_attr, func, tsd) == 0);
-	}
-
-	res->re_count = lm_optB;
+	LM_CHK(pthread_create(ts->ts_threads, ts->ts_attr, func, tsd) == 0);
 	return (0);
 }
 
 int
-benchmark_finibatch(void *tsd)
+benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int i;
 
         LM_CHK(pthread_mutex_unlock(&ts->ts_lock) == 0);
+	LM_CHK(pthread_join(*ts->ts_threads, NULL) == 0);
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(pthread_join(ts->ts_threads[i], NULL) == 0);
-	}
 	return (0);
 }

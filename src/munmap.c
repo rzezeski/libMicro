@@ -28,7 +28,7 @@ typedef volatile char		vchar_t;
 
 typedef struct {
 	int			ts_once;
-	vchar_t **		ts_map;
+	vchar_t *		ts_map;
 	vchar_t			ts_foo;
 } tsd_t;
 
@@ -100,40 +100,36 @@ benchmark_initrun()
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i, j;
+	int			j;
 
 	if (ts->ts_once++ == 0) {
-		ts->ts_map = (vchar_t **)malloc(lm_optB * sizeof (void *));
+		ts->ts_map = malloc(sizeof (void *));
 		LM_CHK(ts->ts_map != NULL);
 	}
 
-	for (i = 0; i < lm_optB; i++) {
-		if (anon) {
-			ts->ts_map[i] = (vchar_t *)mmap(NULL, optl,
-			    PROT_READ | PROT_WRITE,
-			    MAP_ANON | (opts ? MAP_SHARED : MAP_PRIVATE),
-			    -1, 0L);
-		} else {
-			ts->ts_map[i] = (vchar_t *)mmap(NULL, optl,
-			    PROT_READ | PROT_WRITE,
-			    opts ? MAP_SHARED : MAP_PRIVATE,
-			    fd, 0L);
-		}
+	if (anon) {
+		ts->ts_map = mmap(NULL, optl, PROT_READ | PROT_WRITE,
+		    MAP_ANON | (opts ? MAP_SHARED : MAP_PRIVATE),
+		    -1, 0L);
+	} else {
+		ts->ts_map = mmap(NULL, optl, PROT_READ | PROT_WRITE,
+		    opts ? MAP_SHARED : MAP_PRIVATE,
+		    fd, 0L);
+	}
 
-		LM_CHK(ts->ts_map[i] != MAP_FAILED);
+	LM_CHK(ts->ts_map != MAP_FAILED);
 
-		if (optr) {
-			for (j = 0; j < optl; j += 4096) {
-				ts->ts_foo += ts->ts_map[i][j];
-			}
+	if (optr) {
+		for (j = 0; j < optl; j += 4096) {
+			ts->ts_foo += ts->ts_map[j];
 		}
-		if (optw) {
-			for (j = 0; j < optl; j += 4096) {
-				ts->ts_map[i][j] = 1;
-			}
+	}
+	if (optw) {
+		for (j = 0; j < optl; j += 4096) {
+			ts->ts_map[j] = 1;
 		}
 	}
 
@@ -144,12 +140,8 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(munmap((void *)ts->ts_map[i], optl) == 0);
-	}
-	res->re_count += lm_optB;
+	LM_CHK(munmap((void *)ts->ts_map, optl) == 0);
 
 	return (0);
 }

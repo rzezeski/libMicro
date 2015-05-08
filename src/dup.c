@@ -41,8 +41,6 @@ benchmark_init()
 {
 	lm_tsdsize = sizeof (tsd_t);
 
-	lm_defB = 256;
-
 	(void) sprintf(lm_optstr, "f:");
 
 	(void) sprintf(lm_usage,
@@ -69,25 +67,21 @@ benchmark_optswitch(int opt, char *optarg)
 int
 benchmark_initrun()
 {
-	(void) setfdlimit(lm_optB * lm_optT + 10);
+	(void) setfdlimit(lm_optT + 10);
 	fd = (open(optf, O_RDONLY));
 
 	return (0);
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
 	if (ts->ts_once++ == 0) {
-		ts->ts_fds = (int *)malloc(lm_optB * sizeof (int));
+		ts->ts_fds = (int *)malloc(sizeof (int));
 		LM_CHK(ts->ts_fds != NULL);
-
-		for (i = 0; i < lm_optB; i++) {
-			ts->ts_fds[i] = -1;
-		}
+		ts->ts_fds[0] = -1;
 	}
 
 	return (0);
@@ -97,26 +91,19 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		ts->ts_fds[i] = dup(fd);
-		LM_CHK(ts->ts_fds[i] != -1);
-	}
-	res->re_count = i;
+	ts->ts_fds[0] = dup(fd);
+	LM_CHK(ts->ts_fds[0] != -1);
 
 	return (0);
 }
 
 int
-benchmark_finibatch(void *tsd)
+benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(close(ts->ts_fds[i]) == 0);
-	}
+	LM_CHK(close(ts->ts_fds[0]) == 0);
 
 	return (0);
 }

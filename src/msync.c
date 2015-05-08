@@ -123,24 +123,21 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i, j;
+	int			j;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(msync(ts->ts_map, optl, opta | opti) == 0);
+	LM_CHK(msync(ts->ts_map, optl, opta | opti) == 0);
 
-		if (optr) {
-			for (j = 0; j < optl; j += pagesize) {
-				ts->ts_foo += ts->ts_map[j];
-			}
-		}
-
-		if (optw) {
-			for (j = 0; j < optl; j += pagesize) {
-				ts->ts_map[j] = 1;
-			}
+	if (optr) {
+		for (j = 0; j < optl; j += pagesize) {
+			ts->ts_foo += ts->ts_map[j];
 		}
 	}
-	res->re_count = i;
+
+	if (optw) {
+		for (j = 0; j < optl; j += pagesize) {
+			ts->ts_map[j] = 1;
+		}
+	}
 
 	return (0);
 }

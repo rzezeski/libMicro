@@ -29,6 +29,7 @@
 
 typedef struct {
 	int			ts_once;
+	/* should be ts_pid */
 	int			*ts_pids;
 } tsd_t;
 
@@ -66,7 +67,7 @@ benchmark_optswitch(int opt, char *optarg)
 int
 benchmark_initrun()
 {
-	b = barrier_create(lm_optP * lm_optT * (lm_optB + 1), 0);
+	b = barrier_create(lm_optP * lm_optT * 1, 0);
 
 	return (0);
 }
@@ -80,13 +81,12 @@ benchmark_finirun()
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
 	if (ts->ts_once++ == 0) {
-		ts->ts_pids = (int *)malloc(lm_optB * sizeof (pid_t));
+		ts->ts_pids = (int *)malloc(sizeof (pid_t));
 		LM_CHK(ts->ts_pids != NULL);
 	}
 
@@ -94,18 +94,16 @@ benchmark_initbatch(void *tsd)
 	 * create processes to exit
 	 */
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK((ts->ts_pids[i] = fork()) != -1);
-		switch (ts->ts_pids[i]) {
-		case 0:
-			(void) barrier_queue(b, NULL);
-			if (opte)
-				_exit(0);
-			exit(0);
-			break;
-		default:
-			continue;
-		}
+	LM_CHK((ts->ts_pids[0] = fork()) != -1);
+	switch (ts->ts_pids[0]) {
+	case 0:
+		(void) barrier_queue(b, NULL);
+		if (opte)
+			_exit(0);
+		exit(0);
+		break;
+	default:
+		break;
 	}
 
 	return (0);
@@ -115,21 +113,11 @@ benchmark_initbatch(void *tsd)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
-
 	/*
 	 * Start them all exiting.
 	 */
 	(void) barrier_queue(b, NULL);
-
-	/*
-	 * Wait for them all to exit.
-	 */
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(waitpid((pid_t)-1, NULL, 0) != -1);
-	}
-
-	res->re_count = i;
+	LM_CHK(waitpid((pid_t)-1, NULL, 0) != -1);
 
 	return (0);
 }

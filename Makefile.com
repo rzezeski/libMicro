@@ -73,8 +73,8 @@ BENCHMARK_FUNCS=		\
 	benchmark_fini.o	\
 	benchmark_initrun.o	\
 	benchmark_finirun.o	\
-	benchmark_initbatch.o	\
-	benchmark_finibatch.o	\
+	benchmark_pre.o		\
+	benchmark_post.o	\
 	benchmark_initworker.o	\
 	benchmark_finiworker.o	\
 	benchmark_optswitch.o	\

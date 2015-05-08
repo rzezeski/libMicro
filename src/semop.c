@@ -39,7 +39,7 @@ benchmark_init()
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -49,7 +49,7 @@ benchmark_initbatch(void *tsd)
 }
 
 int
-benchmark_finibatch(void *tsd)
+benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -61,23 +61,18 @@ benchmark_finibatch(void *tsd)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	tsd_t			*ts = (tsd_t *)tsd;
 	struct sembuf		s[1];
 
-	for (i = 0; i < lm_optB; i++) {
-		s[0].sem_num = 0;
-		s[0].sem_op  = 1;
-		s[0].sem_flg = 0;
-		LM_CHK(semop(ts->ts_semid, s, 1) == 0);
+	s[0].sem_num = 0;
+	s[0].sem_op  = 1;
+	s[0].sem_flg = 0;
+	LM_CHK(semop(ts->ts_semid, s, 1) == 0);
 
-		s[0].sem_num = 0;
-		s[0].sem_op  = -1;
-		s[0].sem_flg = 0;
-		LM_CHK(semop(ts->ts_semid, s, 1) == 0);
-	}
-
-	res->re_count += lm_optB;
+	s[0].sem_num = 0;
+	s[0].sem_op  = -1;
+	s[0].sem_flg = 0;
+	LM_CHK(semop(ts->ts_semid, s, 1) == 0);
 
 	return (0);
 }

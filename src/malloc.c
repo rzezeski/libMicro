@@ -88,20 +88,17 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i, j = 0, k;
+	int			j = 0, k;
 
-	for (i = 0; i < lm_optB; i++) {
-		for (k = j = 0; j < optg; j++) {
-			LM_CHK((ts->ts_glob[j] = malloc(opts[k++])) != NULL);
-			if (k >= optscnt)
-				k = 0;
-		}
-		for (j = 0; j < optg; j++) {
-			free(ts->ts_glob[j]);
-		}
+	for (k = j = 0; j < optg; j++) {
+		LM_CHK((ts->ts_glob[j] = malloc(opts[k++])) != NULL);
+		if (k >= optscnt)
+			k = 0;
 	}
 
-	res->re_count = i * j;
+	for (j = 0; j < optg; j++) {
+		free(ts->ts_glob[j]);
+	}
 
 	return (0);
 }

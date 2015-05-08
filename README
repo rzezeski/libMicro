@@ -65,12 +65,10 @@ directly to a test or by modifying `OPTS` in `bench`.
 
        [-1] (single process; overrides -P > 1)
        [-A] (align with clock)
-       [-B batch-size (default 10)]
        [-C minimum number of samples (default 0)]
        [-D duration in msecs (default 10s)]
        [-E (echo name to stderr)]
        [-H] (suppress headers)
-       [-I] specify approx. time per op in nsecs
        [-L] (print argument line)
        [-M] (reports mean rather than median)
        [-N test-name ]
@@ -78,4 +76,3 @@ directly to a test or by modifying `OPTS` in `bench`.
        [-S] (print detailed stats)
        [-T threads (default 1)]
        [-V] (print the libMicro version and exit)
-       [-W] (flag possible benchmark problems)

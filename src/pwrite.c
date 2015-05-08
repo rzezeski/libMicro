@@ -84,7 +84,7 @@ benchmark_initrun()
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			i;
@@ -107,12 +107,8 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(pwrite(fd, ts->ts_buf, opts, 0) == opts);
-	}
-	res->re_count = i;
+	LM_CHK(pwrite(fd, ts->ts_buf, opts, 0) == opts);
 
 	return (0);
 }

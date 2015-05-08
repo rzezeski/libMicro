@@ -44,7 +44,7 @@ benchmark_init()
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -54,7 +54,7 @@ benchmark_initbatch(void *tsd)
 }
 
 int
-benchmark_finibatch(void *tsd)
+benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -66,16 +66,12 @@ benchmark_finibatch(void *tsd)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			opt;
 
-	for (i = 0; i < lm_optB; i++) {
-		opt = 1 & i;
-		LM_CHK(setsockopt(ts->ts_fd, IPPROTO_TCP, TCP_NODELAY,
-			&opt, sizeof (int)) == 0);
-	}
-	res->re_count += lm_optB;
+	opt = 1;
+	LM_CHK(setsockopt(ts->ts_fd, IPPROTO_TCP, TCP_NODELAY,
+		&opt, sizeof (int)) == 0);
 
 	return (0);
 }

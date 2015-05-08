@@ -81,15 +81,11 @@ benchmark_initrun()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	struct sockaddr_in	adds;
 	socklen_t		size;
 
-	for (i = 0; i < lm_optB; i++) {
-		size = sizeof (struct sockaddr_in);
-		LM_CHK(getsockname(sock, (struct sockaddr *)&adds, &size) == 0);
-	}
-	res->re_count = i;
+	size = sizeof (struct sockaddr_in);
+	LM_CHK(getsockname(sock, (struct sockaddr *)&adds, &size) == 0);
 
 	return (0);
 }

@@ -54,8 +54,6 @@ benchmark_init()
 
 	(void) sprintf(lm_header, "%8s", "size");
 
-	lm_defB = 1;
-
 	return (0);
 }
 
@@ -79,13 +77,7 @@ benchmark_optswitch(int opt, char *optarg)
 }
 
 int
-benchmark_initrun()
-{
-	return (0);
-}
-
-int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -103,16 +95,13 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 	int			j;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(read(ts->ts_fd, ts->ts_buf, opts) == opts);
-		if (optw)
-			for (j = 0; j < opts; j += optw)
-				ts->ts_buf[j] = 0;
+	LM_CHK(read(ts->ts_fd, ts->ts_buf, opts) == opts);
+	if (optw) {
+		for (j = 0; j < opts; j += optw)
+			ts->ts_buf[j] = 0;
 	}
-	res->re_count = i;
 
 	return (0);
 }

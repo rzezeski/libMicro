@@ -83,13 +83,8 @@ benchmark_initrun()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
-
-	for (i = 0; i < lm_optB; i += 2) {
-		LM_CHK(listen(sock, 4) == 0);
-		LM_CHK(listen(sock, 5) == 0);
-	}
-	res->re_count = i;
+	LM_CHK(listen(sock, 4) == 0);
+	LM_CHK(listen(sock, 5) == 0);
 
 	return (0);
 }

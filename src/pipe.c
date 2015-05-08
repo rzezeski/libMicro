@@ -146,7 +146,7 @@ benchmark_initrun()
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			result;
@@ -206,19 +206,15 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(write(ts->ts_out, wbuf, opts) == opts);
-		LM_CHK(readall(ts->ts_in, rbuf, opts) != -1);
-	}
-	res->re_count = i;
+	LM_CHK(write(ts->ts_out, wbuf, opts) == opts);
+	LM_CHK(readall(ts->ts_in, rbuf, opts) != -1);
 
 	return (0);
 }
 
 int
-benchmark_finibatch(void *tsd)
+benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -284,12 +280,10 @@ void *
 loopback(void *arg)
 {
 	tsd_t			*ts = (tsd_t *)arg;
-	int			i, m;
+	int			i;
 
-	/* Include priming and termination */
-	m = lm_optB + 2;
-
-	for (i = 0; i < m; i++) {
+	/* Run 3 times to include priming and termination. */
+	for (i = 0; i < 3; i++) {
 		LM_CHK(readall(ts->ts_in2, rbuf, opts) == opts);
 		LM_CHK(write(ts->ts_out2, wbuf, opts) == opts);
 	}

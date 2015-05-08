@@ -59,14 +59,9 @@ benchmark_optswitch(int opt, char *optarg)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	struct stat		sbuf;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(stat(optf, &sbuf) == 0);
-	}
-
-	res->re_count += lm_optB;
+	LM_CHK(stat(optf, &sbuf) == 0);
 
 	return (0);
 }

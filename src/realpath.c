@@ -58,13 +58,9 @@ benchmark_optswitch(int opt, char *optarg)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	char			path[MAXPATHLEN];
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(realpath(optf, path) != NULL);
-	}
-	res->re_count = i;
+	LM_CHK(realpath(optf, path) != NULL);
 
 	return (0);
 }

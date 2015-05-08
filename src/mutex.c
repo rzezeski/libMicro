@@ -143,18 +143,11 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i ++) {
-
-		(void) pthread_mutex_lock(ts->ts_lock);
-		if (opth)
-			spinme(opth);
-		(void) pthread_mutex_unlock(ts->ts_lock);
-
-	}
-
-	res->re_count = lm_optB;
+	(void) pthread_mutex_lock(ts->ts_lock);
+	if (opth)
+		spinme(opth);
+	(void) pthread_mutex_unlock(ts->ts_lock);
 
 	return (0);
 }

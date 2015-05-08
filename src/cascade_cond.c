@@ -181,7 +181,7 @@ unblock(int index)
  */
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
@@ -219,36 +219,31 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
 	/* Wait to be unblocked (id == 0 will not block). */
 	block(ts->ts_us0);
 
-	for (i = 0; i < lm_optB; i += 2) {
-		/* Allow them to block us again. */
-		unblock(ts->ts_us0);
+	/* Allow them to block us again. */
+	unblock(ts->ts_us0);
 
-		/* Block their next + 1 move. */
-		block(ts->ts_them1);
+	/* Block their next + 1 move. */
+	block(ts->ts_them1);
 
-		/* Unblock their next move. */
-		unblock(ts->ts_them0);
+	/* Unblock their next move. */
+	unblock(ts->ts_them0);
 
-		/* Wait for them to unblock us. */
-		block(ts->ts_us1);
+	/* Wait for them to unblock us. */
+	block(ts->ts_us1);
 
-		/* Repeat with locks reversed. */
-		unblock(ts->ts_us1);
-		block(ts->ts_them0);
-		unblock(ts->ts_them1);
-		block(ts->ts_us0);
-	}
+	/* Repeat with locks reversed. */
+	unblock(ts->ts_us1);
+	block(ts->ts_them0);
+	unblock(ts->ts_them1);
+	block(ts->ts_us0);
 
 	/* Finish batch with nothing blocked. */
 	unblock(ts->ts_them0);
 	unblock(ts->ts_us0);
-
-	res->re_count = i;
 
 	return (0);
 }

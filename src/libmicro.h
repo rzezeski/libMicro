@@ -28,7 +28,6 @@
 #define	STRSIZE			1024
 
 typedef struct {
-	long long		re_count;
 	long long		re_t0;
 	long long		re_t1;
 } result_t;
@@ -76,7 +75,6 @@ typedef struct {
 
 	long long		ba_count;	/* how many ops		 */
 
-	int			ba_quant;	/* how many quant errors */
 	int			ba_batches;	/* how many samples	 */
 
 	double			ba_starttime;	/* test time start */
@@ -127,8 +125,8 @@ int	benchmark_initrun();
 int	benchmark_finirun();
 int	benchmark_initworker();
 int	benchmark_finiworker();
-int	benchmark_initbatch(void *tsd);
-int	benchmark_finibatch(void *tsd);
+int	benchmark_pre(void *tsd);
+int	benchmark_post(void *tsd);
 int	benchmark_optswitch(int opt, char *optarg);
 char	*benchmark_result();
 
@@ -139,7 +137,6 @@ char	*benchmark_result();
 extern int			lm_argc;
 extern char			**lm_argv;
 
-extern int			lm_optB;
 extern int			lm_optD;
 extern int			lm_optH;
 extern char			*lm_optN;
@@ -147,14 +144,12 @@ extern int			lm_optP;
 extern int			lm_optS;
 extern int			lm_optT;
 
-extern int			lm_defB;
 extern int			lm_defD;
 extern int			lm_defH;
 extern char			*lm_defN;
 extern int			lm_defP;
 extern int			lm_defS;
 extern int			lm_defT;
-extern int			lm_nsecs_per_op;
 
 extern char			*lm_procpath;
 extern char			lm_procname[STRSIZE];

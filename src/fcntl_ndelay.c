@@ -58,20 +58,14 @@ benchmark_initrun()
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	int			flags;
 
-	for (i = 0; i < lm_optB; i += 4) {
-		LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
-
-		flags |= O_NDELAY;
-		LM_CHK(fcntl(fd, F_SETFL, &flags) != -1);
-		LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
-
-		flags &= ~O_NDELAY;
-		LM_CHK(fcntl(fd, F_SETFL, &flags) != -1);
-	}
-	res->re_count = i;
+	LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
+	flags |= O_NDELAY;
+	LM_CHK(fcntl(fd, F_SETFL, O_NDELAY) != -1);
+	LM_CHK(fcntl(fd, F_GETFL, &flags) != -1);
+	flags &= ~O_NDELAY;
+	LM_CHK(fcntl(fd, F_SETFL, &flags) != -1);
 
 	return (0);
 }

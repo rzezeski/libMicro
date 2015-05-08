@@ -68,7 +68,7 @@ benchmark_optswitch(int opt, char *optarg)
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 	static char		*demo =
@@ -94,26 +94,12 @@ benchmark_initbatch(void *tsd)
 int
 benchmark(void *tsd, result_t *res)
 {
-	int			i;
 	tsd_t			*ts = (tsd_t *)tsd;
 	int			*sum = &ts->ts_fakegcc;
 	char			*src = ts->ts_a;
 	char			*src2 = ts->ts_b;
 
-	for (i = 0; i < lm_optB; i += 10) {
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-		*sum += strcmp(src, src2);
-	}
-
-	res->re_count = lm_optB;
+	*sum += strcmp(src, src2);
 
 	return (0);
 }

@@ -35,10 +35,10 @@
 
 typedef struct {
 	int			ts_once;
-	int			*ts_lsns;
-	int			*ts_accs;
-	int			*ts_cons;
-	struct sockaddr_in	*ts_adds;
+	int			ts_lsn;
+	int			ts_acc;
+	int			ts_conn;
+	struct sockaddr_in	ts_addr;
 } tsd_t;
 
 static int			opta = 0;
@@ -48,7 +48,6 @@ static struct hostent		*host;
 int
 benchmark_init()
 {
-	lm_defB = 256;
 	lm_tsdsize = sizeof (tsd_t);
 
 	(void) sprintf(lm_optstr, "ac");
@@ -87,81 +86,67 @@ benchmark_optswitch(int opt, char *optarg)
 int
 benchmark_initrun()
 {
-	(void) setfdlimit(3 * lm_optB * lm_optT + 10);
+	(void) setfdlimit(3 * lm_optT + 10);
 
 	return (0);
 }
 
 int
-benchmark_initbatch_once(void *tsd)
+benchmark_pre_once(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 	int			j = FIRSTPORT;
 
-	LM_CHK((ts->ts_lsns = (int *)malloc(lm_optB * sizeof (int))) != NULL);
-	LM_CHK((ts->ts_accs = (int *)malloc(lm_optB * sizeof (int))) != NULL);
-	LM_CHK((ts->ts_cons = (int *)malloc(lm_optB * sizeof (int))) != NULL);
-	ts->ts_adds =
-	    (struct sockaddr_in *)malloc(lm_optB *
-	    sizeof (struct sockaddr_in));
-	LM_CHK(ts->ts_accs != NULL);
+	ts->ts_lsn = socket(AF_INET, SOCK_STREAM, 0);
+	LM_CHK(ts->ts_lsn != -1);
 
-	for (i = 0; i < lm_optB; i++) {
-		ts->ts_lsns[i] = socket(AF_INET, SOCK_STREAM, 0);
-		LM_CHK(ts->ts_lsns[i] != -1);
+	/*
+	 * make accept socket non-blocking so in case of errors
+	 * we don't hang
+	 */
 
-		/*
-		 * make accept socket non-blocking so in case of errors
-		 * we don't hang
-		 */
+	LM_CHK(fcntl(ts->ts_lsn, F_SETFL, O_NDELAY) != -1);
+	LM_CHK((host = gethostbyname("localhost")) != NULL);
 
-	        LM_CHK(fcntl(ts->ts_lsns[i], F_SETFL, O_NDELAY) != -1);
-		LM_CHK((host = gethostbyname("localhost")) != NULL);
+	for (;;) {
+		(void) memset(&ts->ts_addr, 0, sizeof (struct sockaddr_in));
+		ts->ts_addr.sin_family = AF_INET;
+		ts->ts_addr.sin_port = htons(j++);
+		(void) memcpy(&ts->ts_addr.sin_addr.s_addr,
+		    host->h_addr_list[0], sizeof (struct in_addr));
 
-		for (;;) {
-			(void) memset(&ts->ts_adds[i], 0,
-			    sizeof (struct sockaddr_in));
-			ts->ts_adds[i].sin_family = AF_INET;
-			ts->ts_adds[i].sin_port = htons(j++);
-			(void) memcpy(&ts->ts_adds[i].sin_addr.s_addr,
-			    host->h_addr_list[0], sizeof (struct in_addr));
-
-			if (bind(ts->ts_lsns[i],
-			    (struct sockaddr *)&ts->ts_adds[i],
-			    sizeof (struct sockaddr_in)) == 0) {
-				break;
-			}
-
-			LM_CHK(errno == EADDRINUSE);
+		if (bind(ts->ts_lsn,
+			(struct sockaddr *)&ts->ts_addr,
+			sizeof (struct sockaddr_in)) == 0) {
+			break;
 		}
 
-		LM_CHK(listen(ts->ts_lsns[i], 5) == 0);
+		LM_CHK(errno == EADDRINUSE);
 	}
+
+	LM_CHK(listen(ts->ts_lsn, 5) == 0);
+
 	return (0);
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 	int			result;
 
 	if (ts->ts_once++ == 0) {
-		LM_CHK(benchmark_initbatch_once(tsd) == 0);
+		LM_CHK(benchmark_pre_once(tsd) == 0);
 	}
 
-	for (i = 0; i < lm_optB; i++) {
-		ts->ts_cons[i] = socket(AF_INET, SOCK_STREAM, 0);
-		LM_CHK(ts->ts_cons[i] != -1);
-		LM_CHK(fcntl(ts->ts_cons[i], F_SETFL, O_NDELAY) != -1);
-		if (opta) {
-			result = connect(ts->ts_cons[i],
-			    (struct sockaddr *)&ts->ts_adds[i],
-			    sizeof (struct sockaddr_in));
-			LM_CHK((result == 0) || (errno == EINPROGRESS));
-		}
+	ts->ts_conn = socket(AF_INET, SOCK_STREAM, 0);
+	LM_CHK(ts->ts_conn != -1);
+	LM_CHK(fcntl(ts->ts_conn, F_SETFL, O_NDELAY) != -1);
+	if (opta) {
+		result = connect(ts->ts_conn,
+		    (struct sockaddr *)&ts->ts_addr,
+		    sizeof (struct sockaddr_in));
+		LM_CHK((result == 0) || (errno == EINPROGRESS));
 	}
 
 	return (0);
@@ -171,64 +156,60 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 	int			result;
 	struct sockaddr_in	addr;
 	socklen_t		size;
 
-	for (i = 0; i < lm_optB; i++) {
-		if (!opta) {
-		again:
-			result = connect(ts->ts_cons[i],
-			    (struct sockaddr *)&ts->ts_adds[i],
-			    sizeof (struct sockaddr_in));
-			if (result != 0 && errno != EISCONN) {
-				LM_CHK(errno == EINPROGRESS);
-				struct pollfd pollfd;
-				if (optc)
-					continue;
-				pollfd.fd = ts->ts_cons[i];
-				pollfd.events = POLLOUT;
-				if (poll(&pollfd, 1, -1) == 1)
-					goto again;
-			}
-		}
-
-		if (!optc) {
-			size = sizeof (struct sockaddr);
-			for (;;) {
-				struct pollfd pollfd;
-				result = accept(ts->ts_lsns[i],
-				    (struct sockaddr *)&addr, &size);
-				if (result > 0 || (result == -1 &&
-				    errno != EAGAIN))
-					break;
-				pollfd.fd = ts->ts_lsns[i];
-				pollfd.events = POLLIN;
-				if (poll(&pollfd, 1, -1) != 1)
-					break;
-			}
-
-			ts->ts_accs[i] = result;
-			LM_CHK(result != -1);
+	if (!opta) {
+	  again:
+		result = connect(ts->ts_conn,
+		    (struct sockaddr *)&ts->ts_addr,
+		    sizeof (struct sockaddr_in));
+		if (result != 0 && errno != EISCONN) {
+			LM_CHK(errno == EINPROGRESS);
+			struct pollfd pollfd;
+			if (optc)
+				goto done;
+			pollfd.fd = ts->ts_conn;
+			pollfd.events = POLLOUT;
+			if (poll(&pollfd, 1, -1) == 1)
+				goto again;
 		}
 	}
-	res->re_count = i;
+
+	if (!optc) {
+		size = sizeof (struct sockaddr);
+		for (;;) {
+			struct pollfd pollfd;
+			result = accept(ts->ts_lsn,
+			    (struct sockaddr *)&addr, &size);
+			if (result > 0 || (result == -1 &&
+				errno != EAGAIN))
+				break;
+			pollfd.fd = ts->ts_lsn;
+			pollfd.events = POLLIN;
+			if (poll(&pollfd, 1, -1) != 1)
+				break;
+		}
+
+		ts->ts_acc = result;
+		LM_CHK(result != -1);
+	}
+
+  done:
+
 	return (0);
 }
 
 int
-benchmark_finibatch(void *tsd)
+benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		if (!optc) {
-			LM_CHK(close(ts->ts_accs[i]) == 0);
-		}
-		LM_CHK(close(ts->ts_cons[i]) == 0);
+	if (!optc) {
+		LM_CHK(close(ts->ts_acc) == 0);
 	}
+	LM_CHK(close(ts->ts_conn) == 0);
 
 	return (0);
 }

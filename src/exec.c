@@ -33,7 +33,6 @@ static char *argv[3];
 int
 benchmark_init()
 {
-	lm_defB = 128;
 	lm_tsdsize = 0;
 
 	(void) sprintf(lm_usage,
@@ -44,14 +43,14 @@ benchmark_init()
 
 /*ARGSUSED*/
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	char			buffer[80];
 
 	(void) strcpy(exec_path, lm_procpath);
 	(void) strcat(exec_path, "/exec_bin");
 
-	(void) sprintf(buffer, "%d", lm_optB);
+	(void) sprintf(buffer, "%d", 1);
 	argv[0] = exec_path;
 	argv[1] = strdup(buffer);
 	argv[2] = NULL;
@@ -77,8 +76,6 @@ benchmark(void *tsd, result_t *res)
 		/* Child. */
 		LM_CHK(execv(exec_path, argv) != -1);
 	}
-
-	res->re_count = lm_optB;
 
 	return (0);
 }

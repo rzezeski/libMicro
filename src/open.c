@@ -28,7 +28,7 @@
 
 typedef struct {
 	int			ts_once;
-	int			*ts_fds;
+	int			ts_fd;
 } tsd_t;
 
 #define	DEFF			"/dev/null"
@@ -39,8 +39,6 @@ int
 benchmark_init()
 {
 	lm_tsdsize = sizeof (tsd_t);
-
-	lm_defB = 256;
 
 	(void) sprintf(lm_usage,
 	    "       [-f file-to-open (default %s)]\n"
@@ -68,23 +66,18 @@ benchmark_optswitch(int opt, char *optarg)
 int
 benchmark_initrun()
 {
-	(void) setfdlimit(lm_optB * lm_optT + 10);
+	(void) setfdlimit(lm_optT + 10);
 
 	return (0);
 }
 
 int
-benchmark_initbatch(void *tsd)
+benchmark_pre(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
 	if (ts->ts_once++ == 0) {
-		ts->ts_fds = (int *)malloc(lm_optB * sizeof (int));
-		LM_CHK(ts->ts_fds != NULL);
-		for (i = 0; i < lm_optB; i++) {
-			ts->ts_fds[i] = -1;
-		}
+		ts->ts_fd = -1;
 	}
 
 	return (0);
@@ -94,24 +87,17 @@ int
 benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK((ts->ts_fds[i] = open(optf, O_RDONLY)) != -1);
-	}
-	res->re_count = i;
+	LM_CHK((ts->ts_fd = open(optf, O_RDONLY)) != -1);
 	return (0);
 }
 
 int
-benchmark_finibatch(void *tsd)
+benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
-	int			i;
 
-	for (i = 0; i < lm_optB; i++) {
-		LM_CHK(close(ts->ts_fds[i]) == 0);
-	}
+	LM_CHK(close(ts->ts_fd) == 0);
 
 	return (0);
 }
