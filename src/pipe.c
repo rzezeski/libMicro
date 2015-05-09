@@ -80,6 +80,7 @@ int prepare_localtcp(tsd_t *tsd);
 int prepare_localtcp_once(tsd_t *tsd);
 char *lookupa(int x, char *names[]);
 int lookup(char *x, char *names[]);
+void close_conns(tsd_t *tsd);
 
 int
 benchmark_init()
@@ -208,7 +209,7 @@ benchmark(void *tsd, result_t *res)
 	tsd_t			*ts = (tsd_t *)tsd;
 
 	LM_CHK(write(ts->ts_out, wbuf, opts) == opts);
-	LM_CHK(readall(ts->ts_in, rbuf, opts) != -1);
+	LM_CHK(readall(ts->ts_in, rbuf, opts) == opts);
 
 	return (0);
 }
@@ -220,17 +221,13 @@ benchmark_post(void *tsd)
 
 	/* Terminate the loopback */
 	LM_CHK(write(ts->ts_out, wbuf, opts) == opts);
-	LM_CHK(readall(ts->ts_in, rbuf, opts) != -1);
+	LM_CHK(readall(ts->ts_in, rbuf, opts) == opts);
 
 	switch (optm) {
 	case MD_MULTITHREAD:
-		LM_CHK(close(ts->ts_in2) == 0);
-		LM_CHK(close(ts->ts_out2) == 0);
 		LM_CHK(pthread_join(ts->ts_thread, NULL) == 0);
 		break;
 	case MD_MULTIPROCESS:
-		LM_CHK(close(ts->ts_in2) == 0);
-		LM_CHK(close(ts->ts_out2) == 0);
 		LM_CHK(waitpid(ts->ts_child, NULL, 0) != -1);
 		break;
 	case MD_SINGLE:
@@ -238,8 +235,7 @@ benchmark_post(void *tsd)
 		break;
 	}
 
-	LM_CHK(close(ts->ts_in) == 0);
-        LM_CHK(close(ts->ts_out) == 0);
+	close_conns(ts);
 
 	if (optx == XP_FIFOS) {
 		(void) cleanup_fifos(ts);
@@ -481,4 +477,23 @@ lookup(char *x, char *names[])
 		i++;
 	}
 	return (-1);
+}
+
+void
+close_conns(tsd_t *ts)
+{
+	LM_CHK(close(ts->ts_in) == 0);
+	if (optx != XP_SOCKETPAIR && optx != XP_LOCALTCP) {
+		LM_CHK(close(ts->ts_out) == 0);
+	}
+
+	switch (optm) {
+	case MD_MULTITHREAD:
+		/* FALLTHRU */
+	case MD_MULTIPROCESS:
+		LM_CHK(close(ts->ts_in2) == 0);
+		if (optx != XP_SOCKETPAIR && optx != XP_LOCALTCP) {
+			LM_CHK(close(ts->ts_out2) == 0);
+		}
+	}
 }
