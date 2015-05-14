@@ -66,12 +66,8 @@ typedef struct {
 	int			ba_phase;	/* number of time used	*/
 	int 			ba_waiters;	/* how many are waiting	*/
 
-#ifdef USE_SEMOP
-	int			ba_semid;
-#else
 	pthread_mutex_t		ba_lock;
 	pthread_cond_t		ba_cv;
-#endif
 
 	long long		ba_count;	/* how many ops		 */
 
