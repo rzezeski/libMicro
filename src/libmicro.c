@@ -45,7 +45,7 @@ char **				lm_argv = NULL;
 
 int				lm_opt1;
 int				lm_optA;
-int				lm_optC = 100;
+unsigned int			lm_optC = 100;
 int				lm_optD;
 int				lm_optE;
 int				lm_optH;
@@ -253,7 +253,9 @@ actual_main(int argc, char *argv[])
 	}
 
 	/* Initialise worker synchronisation. */
-	b = barrier_create(lm_optT * lm_optP, DATASIZE);
+
+	/* Option -C specifies number of samples per thread. */
+	b = barrier_create(lm_optT * lm_optP, lm_optC * lm_optP * lm_optT);
 	if (b == NULL) {
 		perror("barrier_create()");
 		exit(1);
@@ -349,7 +351,7 @@ actual_main(int argc, char *argv[])
 	    lm_optN, lm_optP, lm_optT,
 	    (lm_optM?b->ba_corrected.st_mean:b->ba_corrected.st_median),
 	    /* TODO: call ba_batches ba_samples or something */
-	    b->ba_batches,
+	    b->ba_samples,
 	    benchmark_result());
 
 	if (lm_optS) {
@@ -391,9 +393,15 @@ worker_thread(void *arg)
 		LM_CHK(benchmark(arg, &r) == 0);
 		r.re_t1 = getnsecs();
 
-		/* Time to stop? */
-		if (r.re_t1 > lm_barrier->ba_deadline &&
-		    (!lm_optC || lm_optC < lm_barrier->ba_batches)) {
+		/*
+		 * Stop if either:
+		 *
+		 * a) The maximum amount of time has been spent.
+		 *
+		 * b) The target number of samples has been met.
+		 */
+		if (r.re_t1 > lm_barrier->ba_deadline ||
+		    (lm_barrier->ba_tgt_samples == lm_barrier->ba_samples)) {
 			lm_barrier->ba_flag = 0;
 		}
 
@@ -462,7 +470,7 @@ print_stats(barrier_t *b)
 	    "usecs/call (raw)",
 	    "usecs/call (outliers removed)");
 
-	if (b->ba_count == 0) {
+	if (b->ba_samples == 0) {
 		(void) printf("zero samples\n");
 		return;
 	}
@@ -503,7 +511,7 @@ print_stats(barrier_t *b)
 
 	(void) printf("#           elasped time %12.5f\n", (b->ba_endtime -
 	    b->ba_starttime) / 1.0e9);
-	(void) printf("#      number of samples %12d\n",   b->ba_batches);
+	(void) printf("#      number of samples %12d\n",   b->ba_samples);
 	(void) printf("#     number of outliers %12d\n", b->ba_outliers);
 	(void) printf("#      getnsecs overhead %12d\n", (int)nsecs_overhead);
 
@@ -514,69 +522,33 @@ print_stats(barrier_t *b)
 }
 
 void
-update_stats(barrier_t *b, result_t *r)
+add_sample(barrier_t *b, result_t *r)
 {
 	double			time;
-	double			nsecs_per_call;
 
-	if (b->ba_waiters == 0) {
-		/* First thread only. */
-		b->ba_t0 = r->re_t0;
-		b->ba_t1 = r->re_t1;
-		b->ba_count0 = 0;
-	} else {
-		/* All but first thread */
-		if (r->re_t0 < b->ba_t0) {
-			b->ba_t0 = r->re_t0;
-		}
-		if (r->re_t1 > b->ba_t1) {
-			b->ba_t1 = r->re_t1;
-		}
-	}
-
-	b->ba_count0  += 1;
-
-	if (b->ba_waiters == b->ba_hwm - 1) {
-		/* Last thread only. */
-		time = (double)b->ba_t1 - (double)b->ba_t0 -
-		    (double)nsecs_overhead;
-
-		/*
-		 * Normalize by (procs * threads) if not -U.
-		 *
-		 * TODO: this is taking an average across
-		 * threads/processes, averages are bad.
-		 */
-		nsecs_per_call = time / (double)b->ba_count0 *
-		    (double)(lm_optT * lm_optP);
-
-		b->ba_count  += b->ba_count0;
-
-		b->ba_data[b->ba_batches % b->ba_datasize] =
-		    nsecs_per_call;
-
-		b->ba_batches++;
-	}
+	time = (double)r->re_t1 - (double)r->re_t0 - (double)nsecs_overhead;
+	b->ba_data[b->ba_samples] = time;
+	b->ba_samples++;
 }
 
 barrier_t *
-barrier_create(int hwm, int datasize)
+barrier_create(int hwm, size_t target_samples)
 {
 	pthread_mutexattr_t	attr;
 	pthread_condattr_t	cattr;
 	barrier_t		*b;
 
 	b = (barrier_t *)mmap(NULL,
-	    sizeof (barrier_t) + (datasize - 1) * sizeof (double),
+	    sizeof (barrier_t) + (target_samples - 1) * sizeof (double),
 	    PROT_READ | PROT_WRITE,
 	    MAP_SHARED | MAP_ANON, -1, 0L);
 	if (b == (barrier_t *)MAP_FAILED) {
 		return (NULL);
 	}
-	b->ba_datasize = datasize;
 
 	b->ba_hwm = hwm;
-	b->ba_flag  = 0;
+	b->ba_flag = 0;
+	b->ba_tgt_samples = target_samples;
 
 	(void) pthread_mutexattr_init(&attr);
 	(void) pthread_mutexattr_setpshared(&attr, PTHREAD_PROCESS_SHARED);
@@ -589,8 +561,6 @@ barrier_create(int hwm, int datasize)
 
 	b->ba_waiters = 0;
 	b->ba_phase = 0;
-
-	b->ba_count = 0;
 
 	return (b);
 }
@@ -610,8 +580,8 @@ barrier_queue(barrier_t *b, result_t *r)
 
 	(void) pthread_mutex_lock(&b->ba_lock);
 
-	if (r != NULL) {
-		update_stats(b, r);
+	if (r != NULL && lm_barrier->ba_flag) {
+		add_sample(b, r);
 	}
 
 	phase = b->ba_phase;
@@ -873,8 +843,7 @@ print_histo(barrier_t *b)
 	(void) printf("#	%12s %12s %32s %12s\n", "counts", "usecs/call",
 	    "", "means");
 
-	/* Calculate amount of data captured. */
-	n = b->ba_batches > b->ba_datasize ? b->ba_datasize : b->ba_batches;
+	n = b->ba_samples;
 
 	/* Find the 95th percentile - index, value and range. */
 	qsort((void *)b->ba_data, n, sizeof (double), doublecmp);
@@ -971,44 +940,34 @@ print_histo(barrier_t *b)
 	(void) printf("#\n");
 	(void) printf("#       %12s %12.5f\n", "mean of 95%", m95);
 	(void) printf("#       %12s %12.5f\n", "95th %ile", p95);
-
-	/* Quantify any buffer overflow. */
-	if (b->ba_batches > b->ba_datasize)
-		(void) printf("#       %12s %12d\n", "data dropped",
-		    b->ba_batches - b->ba_datasize);
 }
 
 static void
 compute_stats(barrier_t *b)
 {
-	int i;
-
-	if (b->ba_batches > b->ba_datasize)
-		b->ba_batches = b->ba_datasize;
-
 	/* convert to usecs/call. */
-	for (i = 0; i < b->ba_batches; i++)
+	for (unsigned int i = 0; i < b->ba_samples; i++)
 		b->ba_data[i] /= 1000.0;
 
 	/* Calculate raw stats. */
-	(void) crunch_stats(b->ba_data, b->ba_batches, &b->ba_raw);
+	(void) crunch_stats(b->ba_data, b->ba_samples, &b->ba_raw);
 
 	/* Recursively apply 3 sigma rule to remove outliers. */
 	b->ba_corrected = b->ba_raw;
 	b->ba_outliers = 0;
 
 	/* Remove outliers. */
-	if (b->ba_batches > 40) {
+	if (b->ba_samples > 40) {
 		int removed;
 
 		do {
-			removed = remove_outliers(b->ba_data, b->ba_batches,
+			removed = remove_outliers(b->ba_data, b->ba_samples,
 			    &b->ba_corrected);
 			b->ba_outliers += removed;
-			b->ba_batches -= removed;
-			(void) crunch_stats(b->ba_data, b->ba_batches,
+			b->ba_samples -= removed;
+			(void) crunch_stats(b->ba_data, b->ba_samples,
 			    &b->ba_corrected);
-			} while (removed != 0 && b->ba_batches > 40);
+		} while (removed != 0 && b->ba_samples > 40);
 	}
 
 }

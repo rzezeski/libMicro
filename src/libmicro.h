@@ -38,7 +38,6 @@ typedef struct {
 } histo_t;
 
 #define	HISTOSIZE		32
-#define	DATASIZE		100000
 
 /*
  * Stats computed per benchmark.
@@ -69,9 +68,8 @@ typedef struct {
 	pthread_mutex_t		ba_lock;
 	pthread_cond_t		ba_cv;
 
-	long long		ba_count;	/* how many ops		 */
-
-	int			ba_batches;	/* how many samples	 */
+	unsigned int		ba_tgt_samples; /* # samples to take */
+	unsigned int		ba_samples;	/* # samples taken */
 
 	double			ba_starttime;	/* test time start */
 	double			ba_endtime;	/* test time end */
@@ -93,11 +91,6 @@ typedef struct {
 
 	int			ba_outliers;	/* outlier count */
 
-	long long		ba_t0;		/* first thread/proc */
-	long long		ba_t1;		/* time of last thread */
-	long long		ba_count0;
-
-	int			ba_datasize;	/* possible #items data	*/
 	double			ba_data[1];	/* start of data ararry	*/
 } barrier_t;
 
@@ -105,7 +98,7 @@ typedef struct {
 /*
  * Barrier interfaces.
  */
-barrier_t *barrier_create(int hwm, int datasize);
+barrier_t *barrier_create(int hwm, size_t target_samples);
 int barrier_destroy(barrier_t *bar);
 int barrier_queue(barrier_t *bar, result_t *res);
 
