@@ -1,30 +1,17 @@
 #!/bin/sh
 #
+# This file and its contents are supplied under the terms of the
+# Common Development and Distribution License ("CDDL"), version 1.0.
+# You may only use this file in accordance with the terms of version
+# 1.0 of the CDDL.
 #
-# CDDL HEADER START
-#
-# The contents of this file are subject to the terms
-# of the Common Development and Distribution License
-# (the "License").  You may not use this file except
-# in compliance with the License.
-#
-# You can obtain a copy of the license at
-# src/OPENSOLARIS.LICENSE
-# or http://www.opensolaris.org/os/licensing.
-# See the License for the specific language governing
-# permissions and limitations under the License.
-#
-# When distributing Covered Code, include this CDDL
-# HEADER in each file and include the License file at
-# usr/src/OPENSOLARIS.LICENSE.  If applicable,
-# add the following below this CDDL HEADER, with the
-# fields enclosed by brackets "[]" replaced with your
-# own identifying information: Portions Copyright [yyyy]
-# [name of copyright owner]
-#
-# CDDL HEADER END
+# A full copy of the text of the CDDL should have accompanied this
+# source.  A copy of the CDDL is also available via the Internet at
+# http://www.illumos.org/license/CDDL.
 #
 
+#
+# Copyright 2015 Ryan Zezeski <ryan@zinascii.com>
 #
 # Copyright 2007 Sun Microsystems, Inc.  All rights reserved.
 # Use is subject to license terms.
@@ -93,7 +80,6 @@ printf "!Processor:    %30s\n" `uname -p`
 printf "!#CPUs:        %30s\n" $p_count
 printf "!CPU_MHz:      %30s\n" $p_mhz
 printf "!CPU_NAME:     %30s\n" "$p_type"
-printf "!IP_address:   %30s\n" `getent hosts $hostname | awk '{print $1}'`
 printf "!Run_by:       %30s\n" $LOGNAME
 printf "!Date:	       %30s\n" "`date '+%D %R'`"
 printf "!Compiler:     %30s\n" `bin/tattle -c`
@@ -101,7 +87,7 @@ printf "!Compiler Ver.:%30s\n" "`bin/tattle -v`"
 printf "!sizeof(long): %30s\n" `bin/tattle -s`
 printf "!extra_CFLAGS: %30s\n" "`bin/tattle -f`"
 printf "!TimerRes:     %30s\n" "`bin/tattle -r`"
- 
+
 mkdir -p $TMPROOT/bin
 cp bin-$ARCH/exec_bin $TMPROOT/bin/$A
 
