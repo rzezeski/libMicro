@@ -22,6 +22,7 @@ ELIDED_BENCHMARKS=	\
 	atomic 		\
 	cachetocache	\
         cascade_mutex   \
+        clock_gettime   \
         connection      \
         exit            \
         fork            \

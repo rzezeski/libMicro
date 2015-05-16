@@ -138,6 +138,12 @@ getpid		$OPTS -N "getpid"
 getenv		$OPTS -N "getenv"	-s 100
 getenv		$OPTS -N "getenvT2"	-s 100 	-T 2
 
+
+clock_gettime   $OPTS -N "clock_MONOTONIC"	-c MONOTONIC
+clock_gettime   $OPTS -N "clock_PROCESS"	-c PROCESS
+clock_gettime   $OPTS -N "clock_REALTIME"	-c REALTIME
+clock_gettime   $OPTS -N "clock_THREAD"		-c THREAD
+
 gettimeofday	$OPTS -N "gettimeofday"
 
 log		$OPTS -N "log"
