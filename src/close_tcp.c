@@ -97,7 +97,7 @@ benchmark_initworker(void *tsd)
 		LM_CHK(errno == EADDRINUSE);
 	}
 
-	LM_CHK(listen(ts->ts_lsn, 5) == 0);
+	LM_CHK(listen(ts->ts_lsn, 1) == 0);
 
 	return (0);
 }
@@ -112,13 +112,25 @@ benchmark_pre(void *tsd)
 
 	ts->ts_conn = socket(AF_INET, SOCK_STREAM, 0);
 	LM_CHK(ts->ts_conn != -1);
-	LM_CHK(fcntl(ts->ts_conn, F_SETFL, O_NDELAY) == 0);
 
 	result = connect(ts->ts_conn,
 	    (struct sockaddr *)&ts->ts_add,
 	    sizeof (struct sockaddr_in));
 
-	LM_CHK((result == -1) && (errno == EINPROGRESS));
+	/*
+	 * The connect() call is refused sometimes for reasons I don't
+	 * understand, so retry once.
+	 */
+	if (result == -1 && errno == ECONNREFUSED) {
+		LM_CHK(close(ts->ts_conn) == 0);
+		ts->ts_conn = socket(AF_INET, SOCK_STREAM, 0);
+		LM_CHK(ts->ts_conn != -1);
+		result = connect(ts->ts_conn,
+		    (struct sockaddr *)&ts->ts_add,
+		    sizeof (struct sockaddr_in));
+	}
+
+	LM_CHK(result == 0);
 
 	size = sizeof (struct sockaddr);
 	result = accept(ts->ts_lsn, (struct sockaddr *)&addr,
