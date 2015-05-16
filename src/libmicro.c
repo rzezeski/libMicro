@@ -86,7 +86,6 @@ static void 		worker_process();
 static void 		usage();
 static void 		print_stats(barrier_t *);
 static void 		print_histo(barrier_t *);
-static int 		remove_outliers(double *, int, stats_t *);
 static long long	nsecs_overhead;
 static long long	nsecs_resolution;
 static long long	get_nsecs_overhead();
@@ -349,8 +348,7 @@ actual_main(int argc, char *argv[])
 	/* Print result. */
 	(void) printf("%-12s %3d %3d %12.5f %12d %s\n",
 	    lm_optN, lm_optP, lm_optT,
-	    (lm_optM?b->ba_corrected.st_mean:b->ba_corrected.st_median),
-	    /* TODO: call ba_batches ba_samples or something */
+	    (lm_optM?b->ba_raw.st_mean:b->ba_raw.st_median),
 	    b->ba_samples,
 	    benchmark_result());
 
@@ -466,53 +464,39 @@ void
 print_stats(barrier_t *b)
 {
 	(void) printf("#\n");
-	(void) printf("# STATISTICS         %12s          %12s\n",
-	    "usecs/call (raw)",
-	    "usecs/call (outliers removed)");
+	(void) printf("# STATISTICS         %12s\n", "usecs/call (raw)");
 
 	if (b->ba_samples == 0) {
 		(void) printf("zero samples\n");
 		return;
 	}
 
-	(void) printf("#                    min %12.5f            %12.5f\n",
-	    b->ba_raw.st_min,
-	    b->ba_corrected.st_min);
+	(void) printf("#                    min %12.5f\n",
+	    b->ba_raw.st_min);
+	(void) printf("#                    max %12.5f\n",
+	    b->ba_raw.st_max);
+	(void) printf("#                   mean %12.5f\n",
+	    b->ba_raw.st_mean);
+	(void) printf("#                 median %12.5f\n",
+	    b->ba_raw.st_median);
+	(void) printf("#                 stddev %12.5f\n",
+	    b->ba_raw.st_stddev);
+	(void) printf("#         standard error %12.5f\n",
+	    b->ba_raw.st_stderr);
+	(void) printf("#   99%% confidence level %12.5f\n",
+	    b->ba_raw.st_99confidence);
+	(void) printf("#                   skew %12.5f\n",
+	    b->ba_raw.st_skew);
+	(void) printf("#               kurtosis %12.5f\n",
+	    b->ba_raw.st_kurtosis);
 
-	(void) printf("#                    max %12.5f            %12.5f\n",
-	    b->ba_raw.st_max,
-	    b->ba_corrected.st_max);
-	(void) printf("#                   mean %12.5f            %12.5f\n",
-	    b->ba_raw.st_mean,
-	    b->ba_corrected.st_mean);
-	(void) printf("#                 median %12.5f            %12.5f\n",
-	    b->ba_raw.st_median,
-	    b->ba_corrected.st_median);
-	(void) printf("#                 stddev %12.5f            %12.5f\n",
-	    b->ba_raw.st_stddev,
-	    b->ba_corrected.st_stddev);
-	(void) printf("#         standard error %12.5f            %12.5f\n",
-	    b->ba_raw.st_stderr,
-	    b->ba_corrected.st_stderr);
-	(void) printf("#   99%% confidence level %12.5f            %12.5f\n",
-	    b->ba_raw.st_99confidence,
-	    b->ba_corrected.st_99confidence);
-	(void) printf("#                   skew %12.5f            %12.5f\n",
-	    b->ba_raw.st_skew,
-	    b->ba_corrected.st_skew);
-	(void) printf("#               kurtosis %12.5f            %12.5f\n",
-	    b->ba_raw.st_kurtosis,
-	    b->ba_corrected.st_kurtosis);
-
-	(void) printf("#       time correlation %12.5f            %12.5f\n",
-	    b->ba_raw.st_timecorr,
-	    b->ba_corrected.st_timecorr);
+	(void) printf("#       time correlation %12.5f\n",
+	    b->ba_raw.st_timecorr);
 	(void) printf("#\n");
 
 	(void) printf("#           elasped time %12.5f\n", (b->ba_endtime -
 	    b->ba_starttime) / 1.0e9);
 	(void) printf("#      number of samples %12d\n",   b->ba_samples);
-	(void) printf("#     number of outliers %12d\n", b->ba_outliers);
 	(void) printf("#      getnsecs overhead %12d\n", (int)nsecs_overhead);
 
 	(void) printf("#\n");
@@ -951,25 +935,6 @@ compute_stats(barrier_t *b)
 
 	/* Calculate raw stats. */
 	(void) crunch_stats(b->ba_data, b->ba_samples, &b->ba_raw);
-
-	/* Recursively apply 3 sigma rule to remove outliers. */
-	b->ba_corrected = b->ba_raw;
-	b->ba_outliers = 0;
-
-	/* Remove outliers. */
-	if (b->ba_samples > 40) {
-		int removed;
-
-		do {
-			removed = remove_outliers(b->ba_data, b->ba_samples,
-			    &b->ba_corrected);
-			b->ba_outliers += removed;
-			b->ba_samples -= removed;
-			(void) crunch_stats(b->ba_data, b->ba_samples,
-			    &b->ba_corrected);
-		} while (removed != 0 && b->ba_samples > 40);
-	}
-
 }
 
 /*
@@ -1097,7 +1062,6 @@ get_nsecs_overhead()
 
 	int i;
 	int count;
-	int outliers;
 
 	/* Warmup. */
 	(void) getnsecs();
@@ -1115,33 +1079,8 @@ get_nsecs_overhead()
 
 	(void) crunch_stats(data, count, &stats);
 
-	while ((outliers = remove_outliers(data, count, &stats)) != 0) {
-		count -= outliers;
-		(void) crunch_stats(data, count, &stats);
-	}
-
 	return ((long long)stats.st_mean);
 
-}
-
-/*
- * Remove any data points from the array more than 3 sigma out.
- */
-static int
-remove_outliers(double *data, int count, stats_t *stats)
-{
-	double outmin = stats->st_mean - 3 * stats->st_stddev;
-	double outmax = stats->st_mean + 3 * stats->st_stddev;
-
-	int i, j, outliers;
-
-	for (outliers = i = j = 0; i < count; i++)
-		if (data[i] > outmax || data[i] < outmin)
-			outliers++;
-		else
-			data[j++] = data[i];
-
-	return (outliers);
 }
 
 /*

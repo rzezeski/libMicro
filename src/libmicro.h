@@ -77,7 +77,6 @@ typedef struct {
 #ifdef NEVER
 	double			ba_tmin;	/* min time taken */
 	double			ba_tmax;	/* max time taken */
-	double			ba_ctmax;	/* max after outliers */
 	double			ba_mean;	/* average value */
 	double			ba_median;	/* median value */
 	double			ba_rawmedian;	/* raw median value */
@@ -87,9 +86,6 @@ typedef struct {
 	double			ba_kurtosis;	/* kurtosis */
 #endif
 	stats_t			ba_raw;		/* raw stats */
-	stats_t			ba_corrected;	/* corrected stats */
-
-	int			ba_outliers;	/* outlier count */
 
 	double			ba_data[1];	/* start of data ararry	*/
 } barrier_t;
