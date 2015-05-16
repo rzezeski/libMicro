@@ -37,10 +37,11 @@
 #define	FIRSTPORT		12345
 
 typedef struct {
-	int			*ts_lsns;
-	int			*ts_accs;
-	int			*ts_cons;
-	struct sockaddr_in	*ts_adds;
+	int			ts_lsn;
+	int			ts_acc;
+	int			ts_conn;
+	struct sockaddr_in	ts_add;
+	int			ts_runs;
 } tsd_t;
 
 int
@@ -70,36 +71,25 @@ benchmark_initworker(void *tsd)
 	int			opt = 1;
 	struct hostent		*host;
 
-	ts->ts_lsns = (int *)malloc(sizeof (int));
-	LM_CHK(ts->ts_lsns != NULL);
+	ts->ts_runs = 0;
 
-	ts->ts_accs = (int *)malloc(sizeof (int));
-	LM_CHK(ts->ts_accs != NULL);
+	ts->ts_lsn = socket(AF_INET, SOCK_STREAM, 0);
+	LM_CHK(ts->ts_lsn != -1);
 
-	ts->ts_cons = (int *)malloc(sizeof (int));
-	LM_CHK(ts->ts_cons != NULL);
-
-	ts->ts_adds = malloc(sizeof (struct sockaddr_in));
-	LM_CHK(ts->ts_adds != NULL);
-
-	ts->ts_lsns[0] = socket(AF_INET, SOCK_STREAM, 0);
-	LM_CHK(ts->ts_lsns[0] != -1);
-
-	LM_CHK(setsockopt(ts->ts_lsns[0], SOL_SOCKET, SO_REUSEADDR,
+	LM_CHK(setsockopt(ts->ts_lsn, SOL_SOCKET, SO_REUSEADDR,
 		&opt, sizeof (int)) != -1);
 
 	LM_CHK((host = gethostbyname("localhost")) != NULL);
 
 	for (;;) {
-		(void) memset(&ts->ts_adds[0], 0,
-		    sizeof (struct sockaddr_in));
-		ts->ts_adds[0].sin_family = AF_INET;
-		ts->ts_adds[0].sin_port = htons(j++);
-		(void) memcpy(&ts->ts_adds[0].sin_addr.s_addr,
+		(void) memset(&ts->ts_add, 0, sizeof (struct sockaddr_in));
+		ts->ts_add.sin_family = AF_INET;
+		ts->ts_add.sin_port = htons(j++);
+		(void) memcpy(&ts->ts_add.sin_addr.s_addr,
 		    host->h_addr_list[0], sizeof (struct in_addr));
 
-		if (bind(ts->ts_lsns[0],
-			(struct sockaddr *)&ts->ts_adds[0],
+		if (bind(ts->ts_lsn,
+			(struct sockaddr *)&ts->ts_add,
 			sizeof (struct sockaddr_in)) == 0) {
 			break;
 		}
@@ -107,7 +97,7 @@ benchmark_initworker(void *tsd)
 		LM_CHK(errno == EADDRINUSE);
 	}
 
-	LM_CHK(listen(ts->ts_lsns[0], 5) == 0);
+	LM_CHK(listen(ts->ts_lsn, 5) == 0);
 
 	return (0);
 }
@@ -120,21 +110,21 @@ benchmark_pre(void *tsd)
 	struct sockaddr_in	addr;
 	socklen_t		size;
 
-	ts->ts_cons[0] = socket(AF_INET, SOCK_STREAM, 0);
-	LM_CHK(ts->ts_cons[0] != -1);
-	LM_CHK(fcntl(ts->ts_cons[0], F_SETFL, O_NDELAY) == 0);
+	ts->ts_conn = socket(AF_INET, SOCK_STREAM, 0);
+	LM_CHK(ts->ts_conn != -1);
+	LM_CHK(fcntl(ts->ts_conn, F_SETFL, O_NDELAY) == 0);
 
-	result = connect(ts->ts_cons[0],
-	    (struct sockaddr *)&ts->ts_adds[0],
+	result = connect(ts->ts_conn,
+	    (struct sockaddr *)&ts->ts_add,
 	    sizeof (struct sockaddr_in));
 
 	LM_CHK((result == -1) && (errno == EINPROGRESS));
 
 	size = sizeof (struct sockaddr);
-	result = accept(ts->ts_lsns[0], (struct sockaddr *)&addr,
+	result = accept(ts->ts_lsn, (struct sockaddr *)&addr,
 	    &size);
 	LM_CHK(result != -1);
-	ts->ts_accs[0] = result;
+	ts->ts_acc = result;
 
 	return (0);
 }
@@ -144,7 +134,7 @@ benchmark(void *tsd, result_t *res)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	LM_CHK(close(ts->ts_accs[0]) == 0);
+	LM_CHK(close(ts->ts_acc) == 0);
 
 	return (0);
 }
@@ -154,7 +144,7 @@ benchmark_post(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	LM_CHK(close(ts->ts_cons[0]) == 0);
+	LM_CHK(close(ts->ts_conn) == 0);
 
 	return (0);
 }
@@ -164,7 +154,7 @@ benchmark_finiworker(void *tsd)
 {
 	tsd_t			*ts = (tsd_t *)tsd;
 
-	LM_CHK(close(ts->ts_lsns[0]) == 0);
+	LM_CHK(close(ts->ts_lsn) == 0);
 
 	return (0);
 }
