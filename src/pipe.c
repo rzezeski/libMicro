@@ -319,7 +319,7 @@ prepare_localtcp_once(tsd_t *ts)
 		LM_CHK(errno == EADDRINUSE);
 	}
 
-	LM_CHK(listen(ts->ts_lsn, 5) != -1);
+	LM_CHK(listen(ts->ts_lsn, 1) != -1);
 	return (0);
 }
 
@@ -337,13 +337,10 @@ prepare_localtcp(tsd_t *ts)
 
 	ts->ts_out = socket(AF_INET, SOCK_STREAM, 0);
 	LM_CHK(ts->ts_out != -1);
-	LM_CHK(fcntl(ts->ts_out, F_SETFL, O_NDELAY) != -1);
 
 	result = connect(ts->ts_out, (struct sockaddr *)&ts->ts_add,
 	    sizeof (struct sockaddr_in));
-
-	LM_CHK((result == -1) && (errno == EINPROGRESS));
-	LM_CHK(fcntl(ts->ts_out, F_SETFL, 0) != -1);
+	LM_CHK(result == 0);
 
 	size = sizeof (struct sockaddr);
 	result = accept(ts->ts_lsn, (struct sockaddr *)&addr, &size);
