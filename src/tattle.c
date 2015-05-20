@@ -65,8 +65,8 @@ main(int argc, char *argv[])
 {
 	int c;
 
-	if (strlen(compiler_version) > 30)
-		compiler_version[30] = 0;
+	if (strlen(compiler_version) > 50)
+		compiler_version[50] = 0;
 
 	cleanup(compiler_version);
 	cleanup(extra_compiler_flags);

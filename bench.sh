@@ -58,35 +58,56 @@ ARCH=`uname -p`
 
 hostname=`uname -n`
 
-if [ -f /usr/sbin/psrinfo ]; then
-	p_count=`psrinfo|wc -l`
-	p_mhz=`psrinfo -v | awk '/operates/{print $6 "MHz"; exit }'`
-	p_type=`psrinfo -vp 2>/dev/null | awk '{if (NR == 3) {print $0; exit}}'` 
-fi
+#
+# Information that must be gathered in platform specific way.
+#
+case $(uname -s) in
+	Darwin)
+		p_count=$(sysctl -n hw.activecpu)
+		p_mhz=$(sysctl -n hw.cpufrequency | \
+				       awk '{ print ($0 / 1000000) MHz }')
+		p_name=$(sysctl -n machdep.cpu.brand_string)
+		;;
+	SunOS)
+		p_count=$(psrinfo | wc -l)
+		# TODO next 2 values assume all CPUs are identical
+		p_mhz=$(kstat -p -m cpu_info -i 0 -s clock_MHz | \
+				       awk -F'\t' '{ print $2 }')
+		p_name=$(kstat -p -m cpu_info -i 0 -s brand | \
+					awk -F'\t' '{ print $2 }')
+		;;
+	Linux)
+		p_count=$(egrep processor /proc/cpuinfo | wc -l)
+		p_mhz=$(awk -F: \
+			    '/cpu MHz/{printf("%5.0f00Mhz\n",$2/100); exit}' \
+			    /proc/cpuinfo)
+		p_name=$(awk -F: '/model name/{print $2; exit}' /proc/cpuinfo)
+		;;
+esac
 
-if [ -f /proc/cpuinfo ]; then
-	p_count=`egrep processor /proc/cpuinfo | wc -l`
-	p_mhz=`awk -F: '/cpu MHz/{printf("%5.0f00Mhz\n",$2/100); exit}' /proc/cpuinfo`
-	p_type=`awk -F: '/model name/{print $2; exit}' /proc/cpuinfo`
-fi
+KEYWIDTH=14
+VALWIDTH=50
+print_header()
+{
+	printf "!%-${KEYWIDTH}s\t%.${VALWIDTH}s\n" "$1" "$2"
+}
 
-printf "!Libmicro_#:   %30s\n" $libmicro_version
-printf "!Options:      %30s\n" "$OPTS"
-printf "!Machine_name: %30s\n" $hostname
-printf "!OS_name:      %30s\n" `uname -s`
-printf "!OS_release:   %30s\n" `uname -r`
-printf "!OS_build:     %30.18s\n" "`uname -v`"
-printf "!Processor:    %30s\n" `uname -p`
-printf "!#CPUs:        %30s\n" $p_count
-printf "!CPU_MHz:      %30s\n" $p_mhz
-printf "!CPU_NAME:     %30s\n" "$p_type"
-printf "!Run_by:       %30s\n" $LOGNAME
-printf "!Date:	       %30s\n" "`date '+%D %R'`"
-printf "!Compiler:     %30s\n" `bin/tattle -c`
-printf "!Compiler Ver.:%30s\n" "`bin/tattle -v`"
-printf "!sizeof(long): %30s\n" `bin/tattle -s`
-printf "!extra_CFLAGS: %30s\n" "`bin/tattle -f`"
-printf "!TimerRes:     %30s\n" "`bin/tattle -r`"
+print_header "Version" $libmicro_version
+print_header "Options" "$OPTS"
+print_header "Hostname" "$hostname"
+print_header "OS" "$(uname -s)"
+print_header "OS Release" "$(uname -r)"
+print_header "OS Build" "$(uname -v)"
+print_header "Processor" "$(uname -p)"
+print_header "Num CPUs" "$p_count"
+print_header "CPU MHz" "$p_mhz"
+print_header "CPU Name" "$p_name"
+print_header "User" "$LOGNAME"
+print_header "Date" "$(date '+%D %R')"
+print_header "Compiler" "$(bin/tattle -c)"
+print_header "Compiler Ver." "$(bin/tattle -v)"
+print_header "sizeof (long)" "$(bin/tattle -s)"
+print_header "extra_CFLAGS" "$(bin/tattle -f)"
 
 mkdir -p $TMPROOT/bin
 cp bin-$ARCH/exec_bin $TMPROOT/bin/$A

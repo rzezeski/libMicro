@@ -41,7 +41,7 @@ $AWK '	BEGIN {
 	next;
 	}
 /^\!/ {
-	split($0, A_header, ":");
+	split($0, A_header, "\t");
 	name = substr(A_header[1],2);
 	headers[name]=name;
 	header_data[name,FILENAME] = substr($0, length(name) + 3);
