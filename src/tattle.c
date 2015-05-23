@@ -28,7 +28,6 @@
  * dummy so we can link w/ libmicro
  */
 
-/*ARGSUSED*/
 int
 benchmark(void *tsd, result_t *res)
 {
@@ -74,7 +73,7 @@ main(int argc, char *argv[])
 	while ((c = getopt(argc, argv, "vcfrsVTR")) != -1) {
 		switch (c) {
 		case 'V':
-			(void) printf("%s\n", LIBMICRO_VERSION);
+			(void) printf("%s %s\n", LIBMICRO_VERSION, LM_VSN_HASH);
 			break;
 		case 'v':
 			(void) printf("%s\n", compiler_version);

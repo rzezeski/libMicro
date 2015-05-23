@@ -193,7 +193,7 @@ actual_main(int argc, char *argv[])
 			lm_optT = sizetoint(optarg);
 			break;
 		case 'V':
-			(void) printf("%s\n", LIBMICRO_VERSION);
+			(void) printf("%s %s\n", LIBMICRO_VERSION, LM_VSN_HASH);
 			exit(0);
 			break;
 		case '?':

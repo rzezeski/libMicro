@@ -27,6 +27,7 @@ CFLAGS+=-std=c99 -m64 -Wall -Wextra -Wno-unused-parameter -Werror
 # Assume GCC or LLVM.
 #
 COMPILER_VERSION_CMD=$(CC) --version | head -1
+LM_VSN_HASH=$(shell git rev-parse HEAD)
 
 default: $(ALL) tattle
 
@@ -51,7 +52,7 @@ $(EXTRA_CFILES:%.c=%.lint):
 libmicro.ln: ../libmicro.c ../libmicro_main.c ../libmicro.h ../benchmark_*.c
 	$(LINT) -muc $(CPPFLAGS) ../libmicro.c ../libmicro_main.c ../benchmark_*.c
 
-CPPFLAGS+= -D_REENTRANT
+CPPFLAGS+= -D_REENTRANT -DLM_VSN_HASH="\"$(LM_VSN_HASH)\""
 
 bind_EXTRA_LIBS=$(NSLLIB) $(SOCKLIB)
 close_tcp_EXTRA_LIBS=$(NSLLIB) $(SOCKLIB)

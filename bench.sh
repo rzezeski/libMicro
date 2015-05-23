@@ -18,7 +18,7 @@
 #
 
 bench_version=1505
-libmicro_version=`bin/tattle -V`
+libmicro_version=$(bin/tattle -V | awk '{ print $1 }')
 
 case $libmicro_version in
 $bench_version)
