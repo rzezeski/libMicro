@@ -52,7 +52,6 @@ typedef struct stats {
 	double	st_99confidence;
 	double	st_skew;
 	double	st_kurtosis;
-	double	st_timecorr;	/* correlation with respect to time */
 } stats_t;
 
 /*

@@ -489,9 +489,6 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_skew);
 	(void) printf("#               kurtosis %12.5f\n",
 	    b->ba_raw.st_kurtosis);
-
-	(void) printf("#       time correlation %12.5f\n",
-	    b->ba_raw.st_timecorr);
 	(void) printf("#\n");
 
 	(void) printf("#           elasped time %12.5f\n", (b->ba_endtime -
@@ -943,7 +940,6 @@ compute_stats(barrier_t *b)
 static int
 crunch_stats(double *data, int count, stats_t *stats)
 {
-	double a;
 	double std;
 	double diff;
 	double sk;
@@ -968,16 +964,7 @@ crunch_stats(double *data, int count, stats_t *stats)
 	dupdata = malloc(bytes = sizeof (double) * count);
 	(void) memcpy(dupdata, data, bytes);
 	qsort((void *)dupdata, count, sizeof (double), doublecmp);
-	stats->st_median   = dupdata[count/2];
-
-	/*
-	 * Reuse dupdata to compute time correlation of data to detect
-	 * interesting time-based trends.
-	 */
-	for (i = 0; i < count; i++)
-		dupdata[i] = (double)i;
-
-	(void) fit_line(dupdata, data, count, &a, &stats->st_timecorr);
+	stats->st_median = dupdata[count/2];
 	free(dupdata);
 
 	std = 0.0;
