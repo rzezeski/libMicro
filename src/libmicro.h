@@ -72,18 +72,7 @@ typedef struct {
 	double			ba_starttime;	/* test time start */
 	double			ba_endtime;	/* test time end */
 
-#ifdef NEVER
-	double			ba_tmin;	/* min time taken */
-	double			ba_tmax;	/* max time taken */
-	double			ba_mean;	/* average value */
-	double			ba_median;	/* median value */
-	double			ba_rawmedian;	/* raw median value */
-	double			ba_stddev;	/* standard deviation */
-	double			ba_stderr;	/* standard error */
-	double			ba_skew; 	/* skew */
-#endif
 	stats_t			ba_raw;		/* raw stats */
-
 	double			ba_data[1];	/* start of data ararry	*/
 } barrier_t;
 
