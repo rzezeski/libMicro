@@ -487,8 +487,6 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_99confidence);
 	(void) printf("#                   skew %12.5f\n",
 	    b->ba_raw.st_skew);
-	(void) printf("#               kurtosis %12.5f\n",
-	    b->ba_raw.st_kurtosis);
 	(void) printf("#\n");
 
 	(void) printf("#           elasped time %12.5f\n", (b->ba_endtime -
@@ -943,7 +941,6 @@ crunch_stats(double *data, int count, stats_t *stats)
 	double std;
 	double diff;
 	double sk;
-	double ku;
 	double mean;
 	int i;
 	int bytes;
@@ -969,7 +966,6 @@ crunch_stats(double *data, int count, stats_t *stats)
 
 	std = 0.0;
 	sk  = 0.0;
-	ku  = 0.0;
 
 	stats->st_max = -1;
 	stats->st_min = 1.0e99; /* Hard to find portable values. */
@@ -983,15 +979,12 @@ crunch_stats(double *data, int count, stats_t *stats)
 		diff = data[i] - mean;
 		std += diff * diff;
 		sk  += diff * diff * diff;
-		ku  += diff * diff * diff * diff;
 	}
 
 	stats->st_stddev   = std = sqrt(std/(double)(count - 1));
 	stats->st_stderr   = std / sqrt(count);
 	stats->st_99confidence = stats->st_stderr * 2.326;
 	stats->st_skew	   = sk / (std * std * std) / (double)(count);
-	stats->st_kurtosis = ku / (std * std * std * std) /
-	    (double)(count) - 3;
 
 	return (0);
 }

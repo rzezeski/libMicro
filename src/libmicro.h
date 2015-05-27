@@ -51,7 +51,6 @@ typedef struct stats {
 	double	st_stderr;
 	double	st_99confidence;
 	double	st_skew;
-	double	st_kurtosis;
 } stats_t;
 
 /*
@@ -82,7 +81,6 @@ typedef struct {
 	double			ba_stddev;	/* standard deviation */
 	double			ba_stderr;	/* standard error */
 	double			ba_skew; 	/* skew */
-	double			ba_kurtosis;	/* kurtosis */
 #endif
 	stats_t			ba_raw;		/* raw stats */
 
