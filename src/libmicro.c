@@ -483,8 +483,6 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_stddev);
 	(void) printf("#         standard error %12.5f\n",
 	    b->ba_raw.st_stderr);
-	(void) printf("#   99%% confidence level %12.5f\n",
-	    b->ba_raw.st_99confidence);
 	(void) printf("#                   skew %12.5f\n",
 	    b->ba_raw.st_skew);
 	(void) printf("#\n");
@@ -983,7 +981,6 @@ crunch_stats(double *data, int count, stats_t *stats)
 
 	stats->st_stddev   = std = sqrt(std/(double)(count - 1));
 	stats->st_stderr   = std / sqrt(count);
-	stats->st_99confidence = stats->st_stderr * 2.326;
 	stats->st_skew	   = sk / (std * std * std) / (double)(count);
 
 	return (0);
