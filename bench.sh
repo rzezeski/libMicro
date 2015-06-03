@@ -238,13 +238,13 @@ cascade_mutex	$OPTS -N "c_mutex_1"
 cascade_mutex	$OPTS -N "c_mutex_10"	-T 10
 cascade_mutex	$OPTS -N "c_mutex_200"	-T 200
 
-cascade_cond	$OPTS -N "c_cond_1"	-I 100
+cascade_cond	$OPTS -N "c_cond_1"
 cascade_cond	$OPTS -N "c_cond_10"	-T 10
 cascade_cond	$OPTS -N "c_cond_200"	-T 200
 
 cascade_lockf	$OPTS -N "c_lockf_1"
 cascade_lockf	$OPTS -N "c_lockf_10"	-P 10
-cascade_lockf	$OPTS -N "c_lockf_200"	-P 200 -I 5000000
+cascade_lockf	$OPTS -N "c_lockf_200"	-P 200
 
 cascade_flock	$OPTS -N "c_flock"
 cascade_flock	$OPTS -N "c_flock_10"	-P 10
