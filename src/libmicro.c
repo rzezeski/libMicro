@@ -481,8 +481,6 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_median);
 	(void) printf("#                 stddev %12.5f\n",
 	    b->ba_raw.st_stddev);
-	(void) printf("#         standard error %12.5f\n",
-	    b->ba_raw.st_stderr);
 	(void) printf("#\n");
 
 	(void) printf("#           elasped time %12.5f\n", (b->ba_endtime -
@@ -975,7 +973,6 @@ crunch_stats(double *data, int count, stats_t *stats)
 	}
 
 	stats->st_stddev   = std = sqrt(std/(double)(count - 1));
-	stats->st_stderr   = std / sqrt(count);
 
 	return (0);
 }

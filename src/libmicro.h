@@ -48,7 +48,6 @@ typedef struct stats {
 	double	st_mean;
 	double	st_median;
 	double	st_stddev;
-	double	st_stderr;
 } stats_t;
 
 /*
