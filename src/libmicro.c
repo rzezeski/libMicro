@@ -483,8 +483,6 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_stddev);
 	(void) printf("#         standard error %12.5f\n",
 	    b->ba_raw.st_stderr);
-	(void) printf("#                   skew %12.5f\n",
-	    b->ba_raw.st_skew);
 	(void) printf("#\n");
 
 	(void) printf("#           elasped time %12.5f\n", (b->ba_endtime -
@@ -938,7 +936,6 @@ crunch_stats(double *data, int count, stats_t *stats)
 {
 	double std;
 	double diff;
-	double sk;
 	double mean;
 	int i;
 	int bytes;
@@ -963,7 +960,6 @@ crunch_stats(double *data, int count, stats_t *stats)
 	free(dupdata);
 
 	std = 0.0;
-	sk  = 0.0;
 
 	stats->st_max = -1;
 	stats->st_min = 1.0e99; /* Hard to find portable values. */
@@ -976,12 +972,10 @@ crunch_stats(double *data, int count, stats_t *stats)
 
 		diff = data[i] - mean;
 		std += diff * diff;
-		sk  += diff * diff * diff;
 	}
 
 	stats->st_stddev   = std = sqrt(std/(double)(count - 1));
 	stats->st_stderr   = std / sqrt(count);
-	stats->st_skew	   = sk / (std * std * std) / (double)(count);
 
 	return (0);
 }

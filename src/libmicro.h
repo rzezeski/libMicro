@@ -49,7 +49,6 @@ typedef struct stats {
 	double	st_median;
 	double	st_stddev;
 	double	st_stderr;
-	double	st_skew;
 } stats_t;
 
 /*
