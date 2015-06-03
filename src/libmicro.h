@@ -28,8 +28,8 @@
 #define	STRSIZE			1024
 
 typedef struct {
-	long long		re_t0;
-	long long		re_t1;
+	uint64_t		re_t0;
+	uint64_t		re_t1;
 } result_t;
 
 typedef struct {
@@ -38,6 +38,12 @@ typedef struct {
 } histo_t;
 
 #define	HISTOSIZE		32
+
+#ifndef NANOSEC
+#define NANOSEC			1000000000UL
+#endif
+
+#define	SECS_TO_NANOS(secs)	((uint64_t)(secs) * (uint64_t)NANOSEC)
 
 /*
  * Stats computed per benchmark.
@@ -59,7 +65,7 @@ typedef struct stats {
 typedef struct {
 	int			ba_hwm;		/* barrier setpoint	*/
 	int			ba_flag;	/* benchmark while true	*/
-	long long		ba_deadline;	/* when to stop		*/
+	uint64_t		ba_deadline;	/* when to stop		*/
 	int			ba_phase;	/* number of time used	*/
 	int 			ba_waiters;	/* how many are waiting	*/
 
@@ -69,8 +75,8 @@ typedef struct {
 	unsigned int		ba_tgt_samples; /* # samples to take */
 	unsigned int		ba_samples;	/* # samples taken */
 
-	double			ba_starttime;	/* test time start */
-	double			ba_endtime;	/* test time end */
+	uint64_t		ba_starttime;	/* test time start */
+	uint64_t		ba_endtime;	/* test time end */
 
 	stats_t			ba_raw;		/* raw stats */
 	double			ba_data[1];	/* start of data ararry	*/

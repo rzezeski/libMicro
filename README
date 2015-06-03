@@ -66,7 +66,7 @@ directly to a test or by modifying `OPTS` in `bench`.
        [-1] (single process; overrides -P > 1)
        [-A] (align with clock)
        [-C target number of samples per thread (default 100)]
-       [-D maximum duration in ms (default 10ms)]
+       [-D maximum duration in secs (default 5 secs)]
        [-E (echo name to stderr)]
        [-H] (suppress headers)
        [-L] (print argument line)

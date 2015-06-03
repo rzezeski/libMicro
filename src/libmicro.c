@@ -57,7 +57,7 @@ int				lm_optS;
 int				lm_optT;
 
 int				lm_def1 = 0;
-int				lm_defD = 10;
+int				lm_defD = 5;
 int				lm_defH = 0;
 char				*lm_defN = NULL;
 int				lm_defP = 1;
@@ -268,7 +268,7 @@ actual_main(int argc, char *argv[])
 
 	/* When we started and when to stop. */
 	b->ba_starttime = getnsecs();
-	b->ba_deadline = (long long) (b->ba_starttime + (lm_optD * 1000000LL));
+	b->ba_deadline = (b->ba_starttime + SECS_TO_NANOS(lm_optD));
 
 	/* Do the work. */
 	if (lm_opt1) {
