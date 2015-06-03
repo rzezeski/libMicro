@@ -464,7 +464,7 @@ void
 print_stats(barrier_t *b)
 {
 	(void) printf("#\n");
-	(void) printf("# STATISTICS         %12s\n", "usecs/call (raw)");
+	(void) printf("# STATISTICS         %12s\n", "usecs/call");
 
 	if (b->ba_samples == 0) {
 		(void) printf("zero samples\n");
