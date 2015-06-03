@@ -477,6 +477,10 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_max);
 	(void) printf("#                  range %12.5f\n",
 	    b->ba_raw.st_range);
+	(void) printf("#                    95%% %12.5f\n",
+	    b->ba_raw.st_p95);
+	(void) printf("#                    99%% %12.5f\n",
+	    b->ba_raw.st_p99);
 	(void) printf("#                   mean %12.5f\n",
 	    b->ba_raw.st_mean);
 	(void) printf("#                 median %12.5f\n",
@@ -925,7 +929,8 @@ compute_stats(barrier_t *b)
 		b->ba_data[i] /= 1000.0;
 
 	/* Calculate raw stats. */
-	(void) crunch_stats(b->ba_data, b->ba_samples, &b->ba_raw);
+	if (b->ba_samples > 0)
+		(void) crunch_stats(b->ba_data, b->ba_samples, &b->ba_raw);
 }
 
 /*
@@ -957,6 +962,10 @@ crunch_stats(double *data, int count, stats_t *stats)
 	(void) memcpy(dupdata, data, bytes);
 	qsort((void *)dupdata, count, sizeof (double), doublecmp);
 	stats->st_median = dupdata[count/2];
+
+	stats->st_p95	= dupdata[(count * 95) / 100];
+	stats->st_p99	= dupdata[(count * 99) / 100];
+
 	free(dupdata);
 
 	std = 0.0;
@@ -976,6 +985,10 @@ crunch_stats(double *data, int count, stats_t *stats)
 
 	stats->st_range = stats->st_max - stats->st_min;
 	stats->st_stddev = sqrt(std/(double)(count - 1));
+
+	assert(stats->st_min <= stats->st_p95);
+	assert(stats->st_p95 <= stats->st_p99);
+	assert(stats->st_p99 <= stats->st_max);
 
 	return (0);
 }
