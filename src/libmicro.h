@@ -45,6 +45,7 @@ typedef struct {
 typedef struct stats {
 	double	st_min;
 	double	st_max;
+	double	st_range;
 	double	st_mean;
 	double	st_median;
 	double	st_stddev;

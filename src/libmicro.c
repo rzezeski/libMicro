@@ -475,6 +475,8 @@ print_stats(barrier_t *b)
 	    b->ba_raw.st_min);
 	(void) printf("#                    max %12.5f\n",
 	    b->ba_raw.st_max);
+	(void) printf("#                  range %12.5f\n",
+	    b->ba_raw.st_range);
 	(void) printf("#                   mean %12.5f\n",
 	    b->ba_raw.st_mean);
 	(void) printf("#                 median %12.5f\n",
@@ -972,7 +974,8 @@ crunch_stats(double *data, int count, stats_t *stats)
 		std += diff * diff;
 	}
 
-	stats->st_stddev   = std = sqrt(std/(double)(count - 1));
+	stats->st_range = stats->st_max - stats->st_min;
+	stats->st_stddev = sqrt(std/(double)(count - 1));
 
 	return (0);
 }
