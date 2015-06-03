@@ -442,8 +442,8 @@ usage()
 	    "usage: %s\n"
 	    "       [-1] (single process; overrides -P > 1)\n"
 	    "       [-A] (align with clock)\n"
-	    "       [-C minimum number of samples (default 0)]\n"
-	    "       [-D duration in msecs (default %ds)]\n"
+	    "       [-C target number of samples per thread (default 100)]\n"
+	    "       [-D maximum duration in secs (default %d secs)]\n"
 	    "       [-E (echo name to stderr)]\n"
 	    "       [-H] (suppress headers)\n"
 	    "       [-L] (print argument line)\n"
@@ -453,7 +453,6 @@ usage()
 	    "       [-S] (print detailed stats)\n"
 	    "       [-T threads (default %d)]\n"
 	    "       [-V] (print the libMicro version and exit)\n"
-	    "       [-W] (flag possible benchmark problems)\n"
 	    "%s\n",
 	    lm_procname,
 	    lm_defD, lm_procname, lm_defP, lm_defT,
