@@ -21,7 +21,7 @@ EXTRA_CFILES=	exec_bin.c 	\
 		elided.c	\
 		tattle.c
 
-CFLAGS+=-std=c99 -m64 -Wall -Wextra -Wno-unused-parameter -Werror
+CFLAGS+= -Wall
 
 #
 # Assume GCC or LLVM.
@@ -95,7 +95,7 @@ tattle:		../src/tattle.c	libmicro.a
 	echo "char CC[] = \""$(CC)"\";" >> tattle.h
 	echo "char extra_compiler_flags[] = \""$(extra_CFLAGS)"\";" >> tattle.h
 	$(CC) -o $(@) $(CFLAGS) -I. $< $(CPPFLAGS) \
-		libmicro.a -lm -pthread $(EXTRA_LIBS)
+		libmicro.a -lm -lpthread $(EXTRA_LIBS)
 
 $(ELIDED_BENCHMARKS):	../src/elided.c
 	$(CC) -o $(@) ../src/elided.c

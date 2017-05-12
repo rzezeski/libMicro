@@ -621,7 +621,7 @@ getusecs()
 	return (((uint64_t)tv.tv_sec * 1000000L) + tv.tv_usec);
 }
 
-#if defined(__sun) || defined(__linux)
+#if defined(__sun) || defined(__linux) || defined(__HAIKU__)
 
 uint64_t
 getnsecs()
@@ -923,8 +923,9 @@ print_histo(barrier_t *b)
 static void
 compute_stats(barrier_t *b)
 {
+	unsigned int i;
 	/* convert to usecs/call. */
-	for (unsigned int i = 0; i < b->ba_samples; i++)
+	for (i = 0; i < b->ba_samples; i++)
 		b->ba_data[i] /= 1000.0;
 
 	/* Calculate raw stats. */
