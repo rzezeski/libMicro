@@ -166,8 +166,8 @@ benchmark(void *tsd, result_t *res)
 		    (struct sockaddr *)&ts->ts_addr,
 		    sizeof (struct sockaddr_in));
 		if (result != 0 && errno != EISCONN) {
-			LM_CHK(errno == EINPROGRESS);
 			struct pollfd pollfd;
+			LM_CHK(errno == EINPROGRESS);
 			if (optc)
 				goto done;
 			pollfd.fd = ts->ts_conn;

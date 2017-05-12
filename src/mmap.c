@@ -17,7 +17,9 @@
  */
 
 #include <sys/mman.h>
+#ifndef __HAIKU__
 #include <sys/sysmacros.h>
+#endif
 #include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
