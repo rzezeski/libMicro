@@ -102,7 +102,7 @@ actual_main(int argc, char *argv[])
 	int			opt;
 	extern char		*optarg;
 	char			*tmp;
-	char			optstr[256];
+	char			optstr[2048];
 	barrier_t		*b;
 	long long		startnsecs;
 
